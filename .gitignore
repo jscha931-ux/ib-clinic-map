@@ -4,3 +4,4 @@ unmatched.csv
 *.xls
 .env
 __pycache__/
+병원지도갱신.bat

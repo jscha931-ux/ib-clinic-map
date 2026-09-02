@@ -20,7 +20,28 @@ LEGACY_JSON = os.path.join(BRAND, "clinics.json")
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "geocache.json")
 OUT = os.path.join(HERE, "docs", "clinics.json")
+OUT_REGION = os.path.join(HERE, "docs", "clinics_by_region.json")  # 챗봇용 시/도별 텍스트
 UNMATCHED = os.path.join(HERE, "unmatched.csv")
+
+# 주소 첫 토큰 -> 표준 시/도명. SAP 주소는 '서울', '서울시', '서울특별시' 가 섞여 있다.
+SIDO = {
+    "서울": "서울특별시", "부산": "부산광역시", "대구": "대구광역시", "인천": "인천광역시",
+    "광주": "광주광역시", "대전": "대전광역시", "울산": "울산광역시", "세종": "세종특별자치시",
+    "경기": "경기도", "강원": "강원특별자치도", "충북": "충청북도", "충남": "충청남도",
+    "전북": "전북특별자치도", "전남": "전라남도", "경북": "경상북도", "경남": "경상남도",
+    "제주": "제주특별자치도",
+    "충청북도": "충청북도", "충청남도": "충청남도", "전라북도": "전북특별자치도",
+    "전라남도": "전라남도", "경상북도": "경상북도", "경상남도": "경상남도",
+}
+
+
+def sido_of(addr, name=""):
+    tok = re.split(r"\s", addr, maxsplit=1)[0]
+    hit = SIDO.get(tok) or SIDO.get(tok[:2])
+    if not hit:  # 주소 오타('겅기도') 폴백: 병원명 접두 '(경기 부천)' 에서 시/도 추출
+        m = re.match(r"\((\S+)", name)
+        hit = SIDO.get(m.group(1)[:2]) if m else None
+    return hit or "기타"
 
 IBA_MCODE = 9174001
 KR_BOUNDS = (33.0, 39.7, 124.5, 132.1)  # lat_min, lat_max, lng_min, lng_max
@@ -240,6 +261,11 @@ def main():
     if not a.dry_run:
         os.makedirs(os.path.dirname(OUT), exist_ok=True)
         json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        region = {}
+        for c in out:
+            region.setdefault(sido_of(c["address"], c["name"]), []).append(c["name"] + " — " + c["address"])
+        region = {k: sorted(v) for k, v in sorted(region.items())}
+        json.dump(region, open(OUT_REGION, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         with open(UNMATCHED, "w", encoding="utf-8-sig") as f:
             f.write("사유,거래처코드,거래처명,주소\n")
             for code, name in no_addr:
@@ -257,6 +283,11 @@ def _selftest():
     assert simplify_addr("광주광역시 서구 금화로 54. 110(금호동,거북빌딩1층)") == "광주광역시 서구 금화로 54"
     assert simplify_addr("경기도 성남시 분당구 불곡로 4, 1층 104호(정자동, 리더스프라자)") == "경기도 성남시 분당구 불곡로 4"
     assert simplify_addr("서울특별시 광진구 광장동 517-5") == "서울특별시 광진구 광장동 517-5"
+    assert sido_of("서울 강남구 대치동 898-8") == "서울특별시"
+    assert sido_of("충북 청주시 흥덕구 직지대로 585") == "충청북도"
+    assert sido_of("전라북도 전주시 완산구 1") == "전북특별자치도"
+    assert sido_of("강원특별자치도 홍천군 홍천읍 267") == "강원특별자치도"
+    assert sido_of("겅기도 부천시 소사로 709", "(경기 부천)수동물병원") == "경기도"
     lo_lat, hi_lat, lo_lng, hi_lng = KR_BOUNDS
     assert lo_lat <= 37.5 <= hi_lat and lo_lng <= 127.0 <= hi_lng  # 서울 = 통과
     assert not (lo_lat <= 40.7 <= hi_lat)  # 뉴욕 = 차단
