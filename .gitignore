@@ -3,3 +3,4 @@ unmatched.csv
 *.xlsx
 *.xls
 .env
+__pycache__/
