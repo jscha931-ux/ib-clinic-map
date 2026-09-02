@@ -14,7 +14,8 @@ import openpyxl
 DESKTOP = r"C:\Users\Owner\OneDrive - GREENCROSS VETERINARY PRODUCTS CO.,LTD\바탕 화면"
 V3_GLOB = os.path.join(DESKTOP, r"MKT\CA 영업부", "2) Report 2026 V3*.xlsx")
 BRAND = os.path.join(DESKTOP, r"MKT\CA 제품\인터베리알파\브랜드 페이지")
-ADDR_XLSX = os.path.join(BRAND, "동물병원 주소 뽑기.xlsx")
+# SAP BP 마스터 export. 날짜 접미가 붙은 최신 파일을 자동 선택 (예: 비즈니스파트너 리스트-260827.xlsx)
+ADDR_GLOB = os.path.join(DESKTOP, r"MKT\CA 영업부", "비즈니스파트너 리스트-*.xlsx")
 LEGACY_JSON = os.path.join(BRAND, "clinics.json")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -105,11 +106,11 @@ def load_buyers():
 
 def load_addresses():
     """SAP BP 마스터: C_code -> (주소, 전화)"""
-    wb, tmp = open_locked(ADDR_XLSX)
+    src = sorted(glob.glob(ADDR_GLOB))[-1]
+    wb, tmp = open_locked(src)
     try:
-        sheet = next(s for s in wb.sheetnames if s.startswith("C2"))
-        print("[주소마스터] " + os.path.basename(ADDR_XLSX) + " / " + sheet)
-        ws = wb[sheet]
+        ws = wb.worksheets[0]
+        print("[주소마스터] " + os.path.basename(src) + " / " + ws.title)
         out = {}
         for r in ws.iter_rows(min_row=2, max_col=8, values_only=True):
             if not r[0]:
@@ -296,6 +297,9 @@ def main():
         region = {k: sorted(v) for k, v in sorted(region.items())}
         json.dump(region, open(OUT_REGION, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         write_docx(region, len(out))
+        import datetime
+        json.dump({"generated": datetime.date.today().isoformat(), "total": len(out), "regions": len(region)},
+                  open(os.path.join(HERE, "docs", "meta.json"), "w", encoding="utf-8"), ensure_ascii=False)
         with open(UNMATCHED, "w", encoding="utf-8-sig") as f:
             f.write("사유,거래처코드,거래처명,주소\n")
             for code, name in no_addr:
