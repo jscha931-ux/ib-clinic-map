@@ -205,6 +205,35 @@ def geocode(addr, key, provider):
     return None
 
 
+def write_docx(region, total):
+    """Wix AI Site Chat 지식 업로드용 문서. 시/도별 제목 + '병원명 — 주소' 목록."""
+    import datetime
+    from docx import Document
+    from docx.shared import Pt
+
+    doc = Document()
+    for style, font, size in (("Normal", "Paperlogy 4 Regular", 10),
+                              ("Heading 1", "Paperlogy 7 Bold", 16),
+                              ("Heading 2", "Paperlogy 7 Bold", 13)):
+        st = doc.styles[style]
+        st.font.name = font
+        st.font.size = Pt(size)
+        st.element.rPr.rFonts.set(
+            "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}eastAsia", font)
+
+    doc.add_heading("인터베리-알파 취급 동물병원 목록", 1)
+    doc.add_paragraph("기준일 %s · 전국 %d개 병원. 인터베리-알파는 동물병원에서만 취급하며, "
+                      "구입과 사용은 담당 수의사와 상담하세요."
+                      % (datetime.date.today().isoformat(), total))
+    for sido, rows in region.items():
+        doc.add_heading("%s (%d)" % (sido, len(rows)), 2)
+        for r in rows:
+            doc.add_paragraph(r)
+    path = os.path.join(HERE, "docs", "인터베리알파_입점병원_목록.docx")
+    doc.save(path)
+    return path
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--provider", choices=sorted(PROVIDERS), default=os.environ.get("GEO_PROVIDER", "vworld"))
@@ -266,6 +295,7 @@ def main():
             region.setdefault(sido_of(c["address"], c["name"]), []).append(c["name"] + " — " + c["address"])
         region = {k: sorted(v) for k, v in sorted(region.items())}
         json.dump(region, open(OUT_REGION, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        write_docx(region, len(out))
         with open(UNMATCHED, "w", encoding="utf-8-sig") as f:
             f.write("사유,거래처코드,거래처명,주소\n")
             for code, name in no_addr:
