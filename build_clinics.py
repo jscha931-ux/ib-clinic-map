@@ -116,24 +116,78 @@ def load_cache():
     return cache
 
 
-def kakao_geocode(addr, key):
-    url = "https://dapi.kakao.com/v2/local/search/address.json?" + urllib.parse.urlencode({"query": addr})
-    req = urllib.request.Request(url, headers={"Authorization": "KakaoAK " + key})
+def simplify_addr(addr):
+    """상세주소(괄호, 층/호, 건물명)를 떼어 낸 축약 주소. 원문이 안 잡힐 때 재시도용."""
+    s = re.sub(r"\([^)]*\)", " ", addr)          # (금호동,거북빌딩1층)
+    s = re.split(r"[,.]", s)[0]                  # 쉼표/마침표 뒤 상세 제거
+    s = re.sub(r"\s+\d+\s*(층|호)\b.*$", "", s)  # 남은 '1층', '104호'
+    return norm_addr(s)
+
+
+def _get_json(url, headers=None):
+    req = urllib.request.Request(url, headers=headers or {})
     with urllib.request.urlopen(req, timeout=10) as resp:
-        docs = json.load(resp).get("documents") or []
-    if not docs:
+        return json.load(resp)
+
+
+def _q_kakao(addr, key):
+    d = _get_json("https://dapi.kakao.com/v2/local/search/address.json?"
+                  + urllib.parse.urlencode({"query": addr}),
+                  {"Authorization": "KakaoAK " + key})
+    docs = d.get("documents") or []
+    return (float(docs[0]["y"]), float(docs[0]["x"])) if docs else None
+
+
+def _q_google(addr, key):
+    d = _get_json("https://maps.googleapis.com/maps/api/geocode/json?"
+                  + urllib.parse.urlencode({"address": addr, "key": key,
+                                            "region": "kr", "language": "ko"}))
+    if d.get("status") == "REQUEST_DENIED":
+        raise RuntimeError("Google: " + str(d.get("error_message")))
+    res = d.get("results") or []
+    if not res:
         return None
-    d = docs[0]
-    lat, lng = float(d["y"]), float(d["x"])
+    loc = res[0]["geometry"]["location"]
+    return (float(loc["lat"]), float(loc["lng"]))
+
+
+def _q_vworld(addr, key):
+    # VWorld 는 도로명(ROAD)/지번(PARCEL) 을 따로 물어야 한다.
+    for kind in ("ROAD", "PARCEL"):
+        d = _get_json("https://api.vworld.kr/req/address?"
+                      + urllib.parse.urlencode({
+                          "service": "address", "request": "getcoord", "version": "2.0",
+                          "crs": "epsg:4326", "address": addr, "refine": "true",
+                          "simple": "false", "format": "json", "type": kind, "key": key}))
+        r = d.get("response") or {}
+        if r.get("status") == "OK":
+            p = r["result"]["point"]
+            return (float(p["y"]), float(p["x"]))
+        if r.get("status") == "ERROR":
+            raise RuntimeError("VWorld: " + str(r.get("error")))
+    return None
+
+
+PROVIDERS = {"kakao": _q_kakao, "google": _q_google, "vworld": _q_vworld}
+
+
+def geocode(addr, key, provider):
+    """원문 -> 실패 시 축약 주소로 재시도. 한국 밖 좌표는 오지오코딩으로 간주해 버린다."""
     lo_lat, hi_lat, lo_lng, hi_lng = KR_BOUNDS
-    if not (lo_lat <= lat <= hi_lat and lo_lng <= lng <= hi_lng):
-        return None  # 한국 밖 = 오지오코딩
-    return {"lat": lat, "lng": lng, "src": "kakao"}
+    fn = PROVIDERS[provider]
+    for q, tag in ((addr, provider), (simplify_addr(addr), provider + "-short")):
+        if not q or (tag.endswith("-short") and q == addr):
+            continue
+        hit = fn(q, key)
+        if hit and lo_lat <= hit[0] <= hi_lat and lo_lng <= hit[1] <= hi_lng:
+            return {"lat": hit[0], "lng": hit[1], "src": tag}
+    return None
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--key", default=os.environ.get("KAKAO_REST_KEY"), help="카카오 REST API 키")
+    ap.add_argument("--provider", choices=sorted(PROVIDERS), default=os.environ.get("GEO_PROVIDER", "vworld"))
+    ap.add_argument("--key", default=os.environ.get("GEO_KEY"), help="지오코딩 API 키")
     ap.add_argument("--dry-run", action="store_true", help="지오코딩 호출 없이 현황만 집계")
     a = ap.parse_args()
 
@@ -155,14 +209,15 @@ def main():
           % (len(buyers), len(clinics), len(no_addr), len(set(need))))
 
     if need and not a.dry_run and not a.key:
-        print("! 카카오 REST API 키가 없어 신규 %d건은 건너뜁니다 (--key 또는 KAKAO_REST_KEY)" % len(set(need)))
+        print("! API 키가 없어 신규 %d건은 건너뜁니다 (--key 또는 GEO_KEY)" % len(set(need)))
         need = []
 
     if need and not a.dry_run:
         todo = sorted(set(need))
+        print("[지오코딩] %s / %d건" % (a.provider, len(todo)))
         for n, addr in enumerate(todo, 1):
             try:
-                res = kakao_geocode(addr, a.key)
+                res = geocode(addr, a.key, a.provider)
             except Exception as e:
                 res = None
                 print("  ! %s -> %s" % (addr, e))
@@ -199,6 +254,9 @@ def main():
 def _selftest():
     assert norm_addr("  서울시   강남구  1 ") == "서울시 강남구 1"
     assert norm_addr(None) == ""
+    assert simplify_addr("광주광역시 서구 금화로 54. 110(금호동,거북빌딩1층)") == "광주광역시 서구 금화로 54"
+    assert simplify_addr("경기도 성남시 분당구 불곡로 4, 1층 104호(정자동, 리더스프라자)") == "경기도 성남시 분당구 불곡로 4"
+    assert simplify_addr("서울특별시 광진구 광장동 517-5") == "서울특별시 광진구 광장동 517-5"
     lo_lat, hi_lat, lo_lng, hi_lng = KR_BOUNDS
     assert lo_lat <= 37.5 <= hi_lat and lo_lng <= 127.0 <= hi_lng  # 서울 = 통과
     assert not (lo_lat <= 40.7 <= hi_lat)  # 뉴욕 = 차단
