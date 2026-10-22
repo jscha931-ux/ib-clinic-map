@@ -44,6 +44,12 @@ def sido_of(addr, name=""):
         hit = SIDO.get(m.group(1)[:2]) if m else None
     return hit or "기타"
 
+
+def sigungu_of(addr):
+    """시/도 다음 토큰이 시·군·구면 그대로. '경기 성남시 분당구' -> '성남시', 세종처럼 없으면 ''."""
+    toks = addr.split()
+    return toks[1] if len(toks) > 1 and toks[1][-1] in "시군구" else ""
+
 IBA_MCODE = 9174001
 KR_BOUNDS = (33.0, 39.7, 124.5, 132.1)  # lat_min, lat_max, lng_min, lng_max
 
@@ -285,7 +291,8 @@ def main():
             failed.append(c)
             continue
         out.append({"id": str(len(out) + 1), "name": c["name"], "address": c["address"],
-                    "phone": "", "lat": hit["lat"], "lng": hit["lng"]})
+                    "phone": "", "lat": hit["lat"], "lng": hit["lng"],  # phone: BP 전화번호1은 99%가 원장 휴대폰이라 공개 안 함
+                    "sido": sido_of(c["address"], c["name"]), "sigungu": sigungu_of(c["address"])})
 
     prev = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else []
     if not a.dry_run:
@@ -322,6 +329,9 @@ def _selftest():
     assert sido_of("전라북도 전주시 완산구 1") == "전북특별자치도"
     assert sido_of("강원특별자치도 홍천군 홍천읍 267") == "강원특별자치도"
     assert sido_of("겅기도 부천시 소사로 709", "(경기 부천)수동물병원") == "경기도"
+    assert sigungu_of("경기 성남시 분당구 정자일로 55") == "성남시"
+    assert sigungu_of("서울 강서구 강서로 506") == "강서구"
+    assert sigungu_of("세종특별자치시 한누리대로 1") == ""
     lo_lat, hi_lat, lo_lng, hi_lng = KR_BOUNDS
     assert lo_lat <= 37.5 <= hi_lat and lo_lng <= 127.0 <= hi_lng  # 서울 = 통과
     assert not (lo_lat <= 40.7 <= hi_lat)  # 뉴욕 = 차단

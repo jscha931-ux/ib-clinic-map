@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex"/>
+<title>인터베리-알파 입점 동물병원 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
+#container{max-width:1600px;margin:0 auto;padding:10px}
+
+/* 툴바 */
+#toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+#toolbar select,#toolbar input,#toolbar button{
+  padding:6px 10px;font-size:14px;border:1px solid #ccc;border-radius:6px;outline:none}
+#toolbar select:focus,#toolbar input:focus{border-color:#4a90d9}
+#searchBox{flex:1;min-width:200px}
+.muted{color:#888;font-size:13px}
+button{background:#fff;cursor:pointer;transition:background .15s}
+button:hover{background:#f0f0f0}
+#btnMyLoc{background:#e8f0fe;border-color:#4a90d9;color:#1a56c4;font-weight:600}
+#btnMyLoc:hover{background:#d0e2fc}
+#btnFull{display:none}
+body.embedded #btnFull{display:inline-block}
+.naver{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:6px;background:#03c75a;color:#fff !important;text-decoration:none;font-weight:600}
+
+/* 레이아웃 */
+#content{display:flex;gap:16px;position:relative}
+#map{width:100%;min-height:400px;border:1px solid #ddd;border-radius:8px;z-index:0}
+#tableWrap{
+  border:1px solid #eee;border-radius:8px;background:#fff;
+  display:flex;flex-direction:column;overflow:hidden}
+#tableTitle{
+  padding:8px 12px;border-bottom:1px solid #eee;background:#fafafa;
+  font-size:13px;color:#555;flex-shrink:0}
+#tableScroll{overflow-y:auto;flex:1}
+table{width:100%;border-collapse:collapse}
+thead th{
+  background:#f6f6f6;position:sticky;top:0;z-index:1;
+  user-select:none;white-space:nowrap}
+th,td{border-bottom:1px solid #eee;padding:9px 12px;text-align:left;font-size:13px;line-height:1.4;word-break:keep-all}
+thead th{cursor:pointer;font-size:13px}
+thead th:hover{background:#eaeaea}
+thead th .sort-icon{margin-left:4px;color:#bbb;font-size:11px}
+thead th.sort-asc .sort-icon::after{content:'▲';color:#4a90d9}
+thead th.sort-desc .sort-icon::after{content:'▼';color:#4a90d9}
+thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
+#listTable tbody tr:hover{background:#f5f7fb;cursor:pointer}
+#listTable td:nth-child(1){width:44px;text-align:right;color:#aaa}
+#listTable td:nth-child(2){font-weight:600;color:#222}
+#listTable td:nth-child(3){color:#555;white-space:normal}
+#pager{
+  display:flex;gap:6px;justify-content:flex-end;align-items:center;
+  padding:8px 12px;border-top:1px solid #eee;flex-shrink:0}
+#pager button{padding:4px 10px;min-width:52px}
+
+/* 로딩 오버레이 */
+#loadingOverlay{
+  display:none;position:absolute;inset:0;
+  background:rgba(255,255,255,.75);z-index:999;
+  align-items:center;justify-content:center;border-radius:8px;flex-direction:column;gap:10px}
+#loadingOverlay.show{display:flex}
+.spinner{
+  width:36px;height:36px;border:4px solid #e0e0e0;
+  border-top-color:#4a90d9;border-radius:50%;
+  animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 결과 없음 */
+#noResult{
+  display:none;padding:32px;text-align:center;color:#aaa;font-size:14px}
+#noResult.show{display:block}
+
+/* 반응형 */
+@media(max-width:768px){
+  #content{flex-direction:column;gap:12px}
+  #map{height:55vh}
+  #tableWrap{max-height:42vh}
+}
+@media(min-width:769px){
+  #content{flex-direction:row;gap:20px}
+  #map{flex:2;height:80vh}
+  #tableWrap{flex:1.3;height:80vh;min-width:400px}
+}
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="toolbar">
+    <label>시/도
+      <select id="sido"><option value="">전체</option></select>
+    </label>
+    <label>구/군
+      <select id="sigungu" disabled><option value="">전체</option></select>
+    </label>
+    <input id="searchBox" type="text" placeholder="병원명 또는 주소 검색 (Enter)"/>
+    <button id="btnSearch">검색</button>
+    <button id="btnReset">초기화</button>
+    <button id="btnMyLoc">📍 내 주변</button>
+    <button id="btnFull">⛶ 전체 화면</button>
+    <span class="muted" id="stat"></span>
+  </div>
+
+  <div id="content">
+    <div id="map"></div>
+
+    <div id="tableWrap">
+      <div id="tableTitle" class="muted">화면에 보이는 병원 (0)</div>
+      <div id="tableScroll">
+        <table id="listTable">
+          <thead>
+            <tr>
+              <th data-col="" style="cursor:default">#</th>
+              <th data-col="name">병원명<span class="sort-icon"></span></th>
+              <th data-col="address">주소<span class="sort-icon"></span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="noResult">검색 결과가 없습니다.</div>
+      </div>
+      <div id="pager">
+        <button id="prev">이전</button>
+        <span id="pageInfo" class="muted">1 / 1</span>
+        <button id="next">다음</button>
+      </div>
+    </div>
+
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <span style="color:#666;font-size:13px">불러오는 중...</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+/* =====================================================
+   상태 변수
+===================================================== */
+let map, allPoints = [], liveMarkers = [], currentRowsInView = [];
+let clusterGroup;
+let page = 1, pageSize = 15;
+let sortCol = '', sortDir = 'asc';  // 정렬 상태
+let myLocMarker = null;
+// Wix HTML 임베드 iframe 은 위치 권한이 막혀 있어(allow="fullscreen" 뿐) 위치·큰 지도는 이 페이지를 새 창으로 연다.
+const MAP_URL = 'https://jscha931-ux.github.io/ib-clinic-map/map.html';
+const EMBEDDED = window.top !== window;
+let nearFrom = null;  // '내 주변' 이후 목록을 거리순으로
+
+/* =====================================================
+   로딩 오버레이
+===================================================== */
+function showLoading(v) {
+  document.getElementById('loadingOverlay').classList.toggle('show', v);
+}
+
+/* =====================================================
+   주소 파싱
+===================================================== */
+function parseRegion(address = '') {
+  const s = String(address).trim();
+  const m1 = s.match(/^(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|제주특별자치도|경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도)/);
+  const sido = m1 ? m1[1] : '';
+  const rest = s.replace(m1 ? m1[1] : '', '').trim();
+  const m2 = rest.match(/^([^\s]+(시|군|구))/);
+  const sigungu = m2 ? m2[1] : '';
+  return { sido, sigungu };
+}
+
+function buildRegionIndex(points) {
+  const regions = new Map();
+  points.forEach(p => {
+    // clinics.json 의 sido/sigungu(줄임말·오타 정규화됨) 우선, 없으면 주소 파싱
+    const { sido, sigungu } = p.sido ? p : parseRegion(p.address || '');
+    p._sido = sido; p._sigungu = sigungu;
+    if (!regions.has(sido)) regions.set(sido, new Set());
+    if (sigungu) regions.get(sido).add(sigungu);
+  });
+  return regions;
+}
+
+function fillSidoSelect(regions) {
+  const $el = document.getElementById('sido');
+  $el.innerHTML = '<option value="">전체</option>';
+  [...regions.keys()].filter(Boolean).sort().forEach(si => {
+    const o = document.createElement('option');
+    o.value = si; o.textContent = si; $el.appendChild(o);
+  });
+}
+
+function fillSigunguSelect(regions, sido) {
+  const $el = document.getElementById('sigungu');
+  $el.innerHTML = '<option value="">전체</option>';
+  if (!sido) { $el.disabled = true; return; }
+  $el.disabled = false;
+  const set = regions.get(sido) || new Set();
+  [...set].filter(Boolean).sort().forEach(gu => {
+    const o = document.createElement('option');
+    o.value = gu; o.textContent = gu; $el.appendChild(o);
+  });
+}
+
+/* =====================================================
+   마커 렌더링 (클러스터 포함)
+===================================================== */
+function clearMarkers() {
+  if (clusterGroup) { map.removeLayer(clusterGroup); }
+  liveMarkers = [];
+}
+
+// '(경기 김포)울디동물병원' -> '울디동물병원 김포시' 로 네이버 플레이스 검색
+function naverUrl(p) {
+  const name = (p.name || '').replace(/^\([^)]*\)\s*/, '');
+  return 'https://map.naver.com/p/search/' + encodeURIComponent((name + ' ' + (p._sigungu || '')).trim());
+}
+
+function renderMarkers(points) {
+  clearMarkers();
+  clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
+
+  const bounds = [];
+  points.forEach(p => {
+    const mk = L.marker([p.lat, p.lng]);
+    mk.__data = p;
+    const popup =
+      `<b style="font-size:14px">${p.name || ''}</b>` +
+      (p.address ? `<br><span style="color:#555">${p.address}</span>` : '') +
+      (p.phone   ? `<br><a href="tel:${p.phone}" style="color:#4a90d9">${p.phone}</a>` : '') +
+      `<br><a class="naver" target="_blank" rel="noopener" href="${naverUrl(p)}">네이버 지도 · 전화 · 길찾기</a>`;
+    mk.bindPopup(`<div style="min-width:200px;line-height:1.6">${popup}</div>`);
+    clusterGroup.addLayer(mk);
+    liveMarkers.push(mk);
+    bounds.push([p.lat, p.lng]);
+  });
+
+  map.addLayer(clusterGroup);
+
+  if (bounds.length) {
+    if (bounds.length === 1) map.setView(bounds[0], 15);
+    else map.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  updateStat();
+  updateListForBounds();
+}
+
+/* =====================================================
+   필터
+===================================================== */
+function filterPoints() {
+  const sido    = document.getElementById('sido').value;
+  const sigungu = document.getElementById('sigungu').value;
+  const q       = document.getElementById('searchBox').value.trim().toLowerCase();
+  let arr = allPoints;
+  if (sido)    arr = arr.filter(p => p._sido    === sido);
+  if (sigungu) arr = arr.filter(p => p._sigungu === sigungu);
+  if (q)       arr = arr.filter(p =>
+    (p.name || '').toLowerCase().includes(q) ||
+    (p.address || '').toLowerCase().includes(q)
+  );
+  return arr;
+}
+
+/* =====================================================
+   통계 표시
+===================================================== */
+function updateStat() {
+  document.getElementById('stat').textContent =
+    `표시 중: ${liveMarkers.length} / 전체 ${allPoints.length}`;
+}
+
+/* =====================================================
+   테이블: 바운즈 기반 필터 + 정렬 + 페이지네이션
+===================================================== */
+function updateListForBounds() {
+  if (!map) return;
+  const b = map.getBounds();
+  let rows = liveMarkers
+    .filter(mk => b.contains(mk.getLatLng()))
+    .map(mk => mk.__data);
+
+  // 정렬
+  if (sortCol) {
+    rows = [...rows].sort((a, b) => {
+      const va = (a[sortCol] || '').toString();
+      const vb = (b[sortCol] || '').toString();
+      return sortDir === 'asc' ? va.localeCompare(vb, 'ko') : vb.localeCompare(va, 'ko');
+    });
+  } else if (nearFrom) {
+    rows = [...rows].sort((a, b) => nearFrom.distanceTo([a.lat, a.lng]) - nearFrom.distanceTo([b.lat, b.lng]));
+  }
+
+  currentRowsInView = rows;
+  page = 1;
+  renderTablePage();
+}
+
+function renderTablePage() {
+  const total      = currentRowsInView.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (page > totalPages) page = totalPages;
+
+  const start = (page - 1) * pageSize;
+  const rows  = currentRowsInView.slice(start, start + pageSize);
+
+  const $tbody   = document.querySelector('#listTable tbody');
+  const $noResult = document.getElementById('noResult');
+
+  if (total === 0) {
+    $tbody.innerHTML = '';
+    $noResult.classList.add('show');
+  } else {
+    $noResult.classList.remove('show');
+    $tbody.innerHTML = rows.map((r, i) => `
+      <tr data-id="${r.id}">
+        <td>${start + i + 1}</td>
+        <td>${r.name    || ''}</td>
+        <td>${r.address || ''}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('tableTitle').textContent = `화면에 보이는 병원 (${total})`;
+  document.getElementById('pageInfo').textContent   = `${page} / ${totalPages}`;
+
+  [...$tbody.querySelectorAll('tr')].forEach(tr => {
+    tr.addEventListener('click', () => {
+      const id = tr.getAttribute('data-id');
+      const mk = liveMarkers.find(m => m.__data.id === id);
+      if (mk) {
+        map.setView(mk.getLatLng(), 16);
+        // 클러스터 안에 있으면 펼치기
+        clusterGroup.zoomToShowLayer(mk, () => mk.openPopup());
+      }
+    });
+  });
+}
+
+/* =====================================================
+   정렬 헤더 클릭
+===================================================== */
+function bindSortHeaders() {
+  document.querySelectorAll('#listTable thead th[data-col]').forEach(th => {
+    const col = th.getAttribute('data-col');
+    if (!col) return;
+    th.addEventListener('click', () => {
+      if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = col; sortDir = 'asc';
+      }
+      // 헤더 클래스 업데이트
+      document.querySelectorAll('#listTable thead th').forEach(h => {
+        h.classList.remove('sort-asc', 'sort-desc');
+      });
+      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      updateListForBounds();
+    });
+  });
+}
+
+/* =====================================================
+   내 위치 버튼
+===================================================== */
+function bindMyLoc() {
+  document.getElementById('btnFull').addEventListener('click', () => window.open(MAP_URL, '_blank'));
+  document.getElementById('btnMyLoc').addEventListener('click', locateMe);
+}
+
+function locateMe() {
+    if (EMBEDDED) { window.open(MAP_URL + '?near=1', '_blank'); return; }
+    if (!navigator.geolocation) {
+      alert('이 브라우저에서는 위치 정보를 사용할 수 없습니다.');
+      return;
+    }
+    showLoading(true);
+    navigator.geolocation.getCurrentPosition(pos => {
+      showLoading(false);
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      if (myLocMarker) map.removeLayer(myLocMarker);
+      myLocMarker = L.circleMarker([lat, lng], {
+        radius: 9, color: '#fff', fillColor: '#4a90d9',
+        fillOpacity: 1, weight: 3
+      }).addTo(map).bindPopup('현재 위치').openPopup();
+      // 가장 가까운 5곳이 함께 보이게 (ponytail: 1천여 건 전수 정렬, 수만 건이면 공간 인덱스로)
+      const me = nearFrom = L.latLng(lat, lng);
+      const near = liveMarkers.map(m => m.getLatLng())
+        .sort((a, b) => me.distanceTo(a) - me.distanceTo(b)).slice(0, 5);
+      map.fitBounds(L.latLngBounds([me, ...near]), { padding: [40, 40], maxZoom: 15 });
+    }, () => {
+      showLoading(false);
+      alert('위치 정보를 가져올 수 없습니다. 휴대폰 설정에서 브라우저의 위치 권한을 허용해 주세요.');
+    });
+}
+
+/* =====================================================
+   UI 바인딩
+===================================================== */
+function bindUI(regions) {
+  const $sido    = document.getElementById('sido');
+  const $sigungu = document.getElementById('sigungu');
+  const $box     = document.getElementById('searchBox');
+
+  $sido.addEventListener('change', () => {
+    fillSigunguSelect(regions, $sido.value);
+    renderMarkers(filterPoints());
+  });
+  $sigungu.addEventListener('change', () => renderMarkers(filterPoints()));
+  document.getElementById('btnSearch').addEventListener('click', () => renderMarkers(filterPoints()));
+  $box.addEventListener('keypress', e => { if (e.key === 'Enter') renderMarkers(filterPoints()); });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    $sido.value = ''; fillSigunguSelect(regions, ''); $box.value = '';
+    sortCol = ''; sortDir = 'asc';
+    document.querySelectorAll('#listTable thead th').forEach(h =>
+      h.classList.remove('sort-asc', 'sort-desc'));
+    renderMarkers(allPoints);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => {
+    if (page > 1) { page--; renderTablePage(); }
+  });
+  document.getElementById('next').addEventListener('click', () => {
+    const tp = Math.max(1, Math.ceil(currentRowsInView.length / pageSize));
+    if (page < tp) { page++; renderTablePage(); }
+  });
+
+  map.on('moveend', updateListForBounds);
+  map.on('zoomend', updateListForBounds);
+
+  bindSortHeaders();
+  bindMyLoc();
+}
+
+/* =====================================================
+   지도 초기화
+===================================================== */
+function initMap(center, dataRows) {
+  showLoading(true);
+  map = L.map('map').setView(center || [37.5665, 126.9780], 11);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  allPoints = (dataRows || [])
+    .map((p, i) => ({
+      id: p.id || String(i),
+      name:    p.name    || '',
+      address: p.address || '',
+      phone:   p.phone   || '',
+      sido:    p.sido    || '',
+      sigungu: p.sigungu || '',
+      lat: Number(p.lat),
+      lng: Number(p.lng)
+    }))
+    .filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+  const regions = buildRegionIndex(allPoints);
+  fillSidoSelect(regions);
+  fillSigunguSelect(regions, '');
+
+  renderMarkers(allPoints);
+  bindUI(regions);
+  showLoading(false);
+}
+
+/* =====================================================
+   Wix Velo postMessage 수신
+   전달 형식: { dataUrl, center, rows }
+   (apiKey 불필요 — Google Maps 제거)
+===================================================== */
+window.addEventListener('message', async e => {
+  if (!e.data || typeof e.data !== 'object') return;
+  const { dataUrl, center, rows } = e.data;
+  showLoading(true);
+  try {
+    let data = rows;
+    if (!data && dataUrl) {
+      const resp = await fetch(dataUrl, { cache: 'no-store' });
+      data = await resp.json();
+    }
+    initMap(center, data);
+  } catch (err) {
+    showLoading(false);
+    console.error('데이터 로드 실패:', err);
+  }
+});
+
+/* =====================================================
+   데모 데이터 (Wix 연동 시 제거 또는 주석 처리)
+===================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  if (EMBEDDED) { document.body.classList.add('embedded'); return; }  // Wix postMessage 대기
+  // 단독 페이지(GitHub Pages): 데이터 직접 로드, ?near=1 이면 바로 내 위치
+  try {
+    const data = await (await fetch('clinics.json', { cache: 'no-store' })).json();
+    initMap(null, data);
+    if (new URLSearchParams(location.search).has('near')) locateMe();
+  } catch (err) {
+    console.error('데이터 로드 실패:', err);
+  }
+});
+</script>
+</body>
+</html>

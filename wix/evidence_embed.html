@@ -1,0 +1,1089 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Paperlogy', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a;
+  background: #fafafa;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;      /* 한글 단어 중간 줄바꿈 방지 */
+  overflow-wrap: anywhere;   /* 긴 영문·URL 넘침 방지 */
+}
+
+/* ===== COLORS ===== */
+:root {
+  --brand-red: #00644E;
+  --brand-red-light: #CCE0DA;
+  --brand-red-dark: #004A39;
+  --bg-white: #ffffff;
+  --bg-light: #f7f7f8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --text-muted: #888;
+  --border-light: #e8e8e8;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+/* ===== LAYOUT ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+section { padding: 80px 0; }
+
+/* ===== HERO / BRIDGE ===== */
+.hero {
+  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  color: #fff;
+  padding: 100px 0 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to top, #fafafa, transparent);
+}
+.hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 100px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+.hero h1 {
+  font-size: clamp(26px, 5vw, 42px);
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+.hero p {
+  font-size: clamp(15px, 2.5vw, 18px);
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+/* ===== SECTION HEADER ===== */
+.section-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.section-label {
+  display: inline-block;
+  color: var(--brand-red);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.section-header h2 {
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.section-header p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ===== PAPER CARDS ===== */
+.papers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) { .papers-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .papers-grid { grid-template-columns: 1fr; } }
+
+.paper-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.paper-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+.paper-card .journal-tag {
+  display: inline-block;
+  background: var(--brand-red-light);
+  color: var(--brand-red);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  width: fit-content;
+}
+.paper-card .paper-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.paper-card .paper-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+.paper-card .key-stat {
+  background: linear-gradient(135deg, #f5fffa, rgb(238, 255, 249));
+  border-left: 4px solid var(--brand-red);
+  border-radius: 0 8px 8px 0;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.paper-card .key-stat .stat-number {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--brand-red);
+  line-height: 1.3;
+}
+.paper-card .key-stat .stat-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.paper-card .summary {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  flex: 1;
+  margin-bottom: 18px;
+}
+.paper-card .paper-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-red);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: gap 0.2s;
+}
+.paper-card .paper-link:hover { gap: 10px; }
+.paper-card .paper-link .arrow { transition: transform 0.2s; }
+.paper-card .paper-link:hover .arrow { transform: translateX(2px); }
+
+/* ===== CHARTS SECTION ===== */
+.charts-section { background: var(--bg-light); }
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.chart-card .chart-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.chart-card canvas { width: 100% !important; }
+.chart-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ===== CASE SECTION ===== */
+.cases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+@media (max-width: 768px) { .cases-grid { grid-template-columns: 1fr; } }
+
+.case-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+.case-card:hover { box-shadow: var(--shadow-md); }
+.case-card .case-header {
+  background: var(--brand-red);
+  color: #fff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.case-card .case-header .case-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.case-card .case-header h3 { font-size: 15px; font-weight: 700; }
+.case-ba {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.case-ba .ba-slot {
+  aspect-ratio: 4/3;
+  background: #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.case-ba .ba-slot.before { border-right: 2px solid var(--border-light); }
+.case-ba .ba-label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.case-ba .before .ba-label { background: var(--text-primary); color: #fff; }
+.case-ba .after .ba-label { background: var(--brand-red); color: #fff; }
+.ba-placeholder {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 0 10px;
+}
+.ba-placeholder svg { margin-bottom: 6px; }
+.case-body {
+  padding: 20px 24px;
+}
+.case-body .timeline-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--brand-red);
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+.case-source {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 12px 24px;
+  border-top: 1px solid var(--border-light);
+  background: #fafafa;
+}
+
+/* ===== TRUST SECTION ===== */
+.trust-section { background: var(--bg-light); }
+.trust-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  align-items: start;
+}
+@media (max-width: 768px) { .trust-grid { grid-template-columns: 1fr; } }
+
+.journals-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+.journals-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.journal-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-light);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.journal-badge:last-child { margin-bottom: 0; }
+.journal-logo {
+  width: 44px;
+  height: 44px;
+  background: var(--brand-red-light);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--brand-red);
+  font-size: 16px;
+}
+.journal-badge .journal-name { font-weight: 600; font-size: 14px; }
+.journal-badge .journal-desc { font-size: 12px; color: var(--text-muted); }
+
+/* TIMELINE */
+.timeline-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+.timeline-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--brand-red-light);
+}
+.timeline-entry {
+  position: relative;
+  margin-bottom: 28px;
+}
+.timeline-entry:last-child { margin-bottom: 0; }
+.timeline-entry::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  background: var(--brand-red);
+  border: 3px solid var(--brand-red-light);
+  border-radius: 50%;
+}
+.timeline-year {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--brand-red);
+  margin-bottom: 4px;
+}
+.timeline-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.timeline-entry.highlight .timeline-desc {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ===== CTA FOOTER ===== */
+.cta-section {
+  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  color: #fff;
+  text-align: center;
+  padding: 64px 0;
+}
+.cta-section h2 {
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.cta-section p {
+  opacity: 0.9;
+  font-size: 16px;
+  margin-bottom: 28px;
+}
+.cta-btn {
+  display: inline-block;
+  background: #fff;
+  color: var(--brand-red);
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 36px;
+  border-radius: 100px;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-light);
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO / BRIDGE ===== -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge">Evidence-Based Veterinary Medicine</div>
+    <h1>"인터베리알파,<br>정말 효과가 있을까요?"</h1>
+    <p>당연한 질문입니다. 우리 아이 입에 넣는 약이니까요.<br>
+    인터베리알파의 효과는 2010년부터 현재까지, 국내외 수의학 저널에 게재된<br>
+    다수의 임상 연구를 통해 검증되어 왔습니다.</p>
+  </div>
+</header>
+
+<!-- ===== SECTION 1: PAPERS ===== -->
+<section id="papers">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Section 01 — Clinical Evidence</div>
+      <h2>논문으로 검증된 효과</h2>
+      <p>국내외 수의학 저널에 게재된 핵심 연구 결과를 확인하세요.</p>
+    </div>
+
+    <div class="papers-grid">
+
+      <!-- Paper 1 -->
+      <div class="paper-card">
+        <div class="journal-tag">J. Vet. Med. Sci. · 2010</div>
+        <div class="paper-title">Ability of Orally Administered IFN-α4 to Inhibit Naturally Occurring Gingival Inflammation in Dogs</div>
+        <div class="paper-meta">Ito et al.</div>
+        <div class="key-stat">
+          <div class="stat-number">치주 병원균 8일 후 미검출</div>
+          <div class="stat-desc">치은염 지수(GI) 유의미한 감소 + 산화 스트레스 지표 감소</div>
+        </div>
+        <div class="summary">인터페론 알파를 먹인 개에서 잇몸 염증 지수가 뚜렷하게 줄었고, 약을 끊은 뒤 8일이 지나도 주요 병원균이 검출되지 않았습니다.</div>
+        <a href="https://doi.org/10.1292/jvms.09-0164" target="_blank" class="paper-link">원문 보기 <span class="arrow">→</span></a>
+      </div>
+
+      <!-- Paper 2 -->
+      <div class="paper-card">
+        <div class="journal-tag">日本獣医師会雑誌 · 2017</div>
+        <div class="paper-title">Long-term Follow-up Study after the Administration of Canine Interferon-α Preparation for Gingivitis in Dogs</div>
+        <div class="paper-meta">Yamaki et al.</div>
+        <div class="key-stat">
+          <div class="stat-number">12개월 이상 효과 지속</div>
+          <div class="stat-desc">IBα + 구강케어 병용 시 / IBα 단독 9개월 효과 유지</div>
+        </div>
+        <div class="summary">인터베리알파만 사용해도 9개월간 치은염 개선이 유지되었고, 구강케어를 병행하면 12개월 이상 효과가 지속되었습니다.</div>
+        <a href="https://doi.org/10.12935/jvma.70.589" target="_blank" class="paper-link">원문 보기 <span class="arrow">→</span></a>
+      </div>
+
+      <!-- Paper 3 -->
+      <div class="paper-card">
+        <div class="journal-tag">J. Vet. Med. Sci. · 2020</div>
+        <div class="paper-title">Long-term follow-up study after administration of a canine interferon-α preparation for feline gingivitis</div>
+        <div class="paper-meta">Yamaki et al.</div>
+        <div class="key-stat">
+          <div class="stat-number">고양이 치은염·구취 유의미한 감소</div>
+          <div class="stat-desc">효과 지속 기간 약 3개월</div>
+        </div>
+        <div class="summary">고양이에서도 치은염과 구취가 눈에 띄게 줄었습니다. 고양이 구강케어의 새로운 대안으로 확인되었습니다.</div>
+        <a href="https://doi.org/10.1292/jvms.19-0187" target="_blank" class="paper-link">원문 보기 <span class="arrow">→</span></a>
+      </div>
+
+      <!-- Paper 4 -->
+      <div class="paper-card">
+        <div class="journal-tag">Scientific Reports · 2020</div>
+        <div class="paper-title">Inhibition of Porphyromonas gulae and periodontal disease in dogs by a combination of clindamycin and interferon alpha</div>
+        <div class="paper-meta">Nomura et al.</div>
+        <div class="key-stat">
+          <div class="stat-number">P. gulae 음성 전환율 37.5%</div>
+          <div class="stat-desc">병용군 최고 수치 / 부작용 0건</div>
+        </div>
+        <div class="summary">항생제와 함께 사용했을 때 치주 질환의 주요 원인균이 가장 많이 사라졌고, 부작용은 한 건도 없었습니다.</div>
+        <a href="https://doi.org/10.1038/s41598-020-59730-9" target="_blank" class="paper-link">원문 보기 <span class="arrow">→</span></a>
+      </div>
+
+      <!-- Paper 5 -->
+      <div class="paper-card">
+        <div class="journal-tag">The Veterinary Journal · 2026</div>
+        <div class="paper-title">Oral interferon alpha treatment significantly reduces halitosis and Porphyromonas gulae growth in dogs with periodontal disease</div>
+        <div class="paper-meta">The Veterinary Journal, 317 (2026) 106613</div>
+        <div class="key-stat">
+          <div class="stat-number">구취 성분 유의하게 감소</div>
+          <div class="stat-desc">수소황화물·메틸메르캅탄 등 악취 성분 객관적 수치로 확인 (p&lt;0.01)</div>
+        </div>
+        <div class="summary">중등도~중증 치주질환 개 32마리를 대상으로 IBα 5주 도포 후, 임상 중증도·치주 병원균 효소 활성·구취 성분(VSC)이 모두 유의하게 감소했습니다. 마취가 어려운 고령견을 위한 비침습적 보조 치료로서의 가능성을 제시한 최신 연구입니다.</div>
+        <a href="https://doi.org/10.1016/j.tvjl.2026.106613" target="_blank" rel="noopener" class="paper-link">원문 보기 <span class="arrow">→</span></a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== CHARTS SECTION ===== -->
+<section class="charts-section" id="charts">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Data Visualization</div>
+      <h2>연구 데이터 시각화</h2>
+      <p>주요 논문의 핵심 데이터를 인터랙티브 그래프로 확인하세요.</p>
+    </div>
+
+    <div class="charts-grid">
+
+      <!-- Chart 1: GI 변화 -->
+      <div class="chart-card">
+        <h3>치은염 지수(GI) 장기 변화 비교</h3>
+        <div class="chart-subtitle">Yamaki et al. (2017) — 개, 12개월 추적</div>
+        <canvas id="chart1" height="260"></canvas>
+        <div class="chart-source">출처: Yamaki et al. (2017) 日本獣医師会雑誌, 70(10), 589-594. 데이터를 기반으로 재구성.</div>
+      </div>
+
+      <!-- Chart 2: P. gulae 도넛 -->
+      <div class="chart-card">
+        <h3>P. gulae 음성 전환율</h3>
+        <div class="chart-subtitle">Nomura et al. (2020) — 개, 그룹별 비교</div>
+        <canvas id="chart2" height="260"></canvas>
+        <div class="chart-source">출처: Nomura et al. (2020) Scientific Reports, 10, 3inja. 데이터를 기반으로 재구성.</div>
+      </div>
+
+      <!-- Chart 3: 티올 농도 -->
+      <div class="chart-card">
+        <h3>구강 내 티올 농도 변화</h3>
+        <div class="chart-subtitle">Shirahata et al. (2020) — 개, 12개월 추적</div>
+        <canvas id="chart3" height="260"></canvas>
+        <div class="chart-source">출처: Shirahata et al. (2020) VETS CASE REPORT. 데이터를 기반으로 재구성.</div>
+      </div>
+
+      <!-- Chart 4: Cotton swab 바차트 -->
+      <div class="chart-card">
+        <h3>Cotton Swab 투여법 임상 결과</h3>
+        <div class="chart-subtitle">GI / 티올 점수 변화 — 개·고양이</div>
+        <canvas id="chart4" height="260"></canvas>
+        <div class="chart-source">출처: Cotton swab 투여법 임상시험 데이터. 데이터를 기반으로 재구성.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 2: CASES ===== -->
+<section id="cases">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Section 02 — Real Cases</div>
+      <h2>실제 증례 결과</h2>
+      <p>인터베리알파를 사용한 실제 환자의 치료 경과를 확인하세요.</p>
+    </div>
+
+    <div class="cases-grid">
+
+      <!-- Case 1 -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-icon">🐕</div>
+          <div>
+            <h3>개 / 치주치료 후 Clindamycin + IBα 병용</h3>
+          </div>
+        </div>
+        <div class="case-ba">
+          <div class="ba-slot before">
+            <div class="ba-label">Before</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_98098a67868d461da4836725e1c1a06e~mv2.jpeg" alt="개 치주치료 전" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="ba-slot after">
+            <div class="ba-label">치료 후</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_e257d1f537b14044addb90578baef592~mv2.jpeg" alt="개 치주치료 후" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>치료 전:</strong> 치석 심한 침착, 잇몸 붓기·발적, 치주 점수 높음</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>치료 후:</strong> 치석 제거 + IBα·항생제 병용 → 치주 점수 유의하게 감소, P. gulae 음성 전환율 37.5%로 전체 그룹 중 최고</div></div>
+        </div>
+        <div class="case-source">출처: Nomura et al., Scientific Reports 10:3113 (2020) — CC BY 4.0</div>
+      </div>
+
+      <!-- Case 2 -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-icon">🐈</div>
+          <div>
+            <h3>고양이 / FIV 양성 / 치은구내염</h3>
+          </div>
+        </div>
+        <div class="case-ba">
+          <div class="ba-slot before">
+            <div class="ba-label">Before</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_9d6cfea90d1b4673bcd3905581911f91~mv2.jpeg" alt="고양이 치은구내염 초진 시" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="ba-slot after">
+            <div class="ba-label">28일 후</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_4f41cfbed2b74f159077a1f2e6fa4290~mv2.jpeg" alt="고양이 치은구내염 28일 후" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>초진 시:</strong> FIV 양성, 잇몸 출혈·통증·유연·식욕부진</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>14일 후:</strong> 출혈 소실, 유연 감소, 식욕 회복</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>28일 후:</strong> 발적 감소, 식욕 완전 회복</div></div>
+        </div>
+        <div class="case-source">출처: 土田靖彦 선생님, MVM 2016 (고리 동물병원)</div>
+      </div>
+
+      <!-- Case 3 -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-icon">🐈</div>
+          <div>
+            <h3>고양이 / 만성 치은염</h3>
+          </div>
+        </div>
+        <div class="case-ba">
+          <div class="ba-slot before">
+            <div class="ba-label">Before</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_81d6e244349c4146a9f338e53367004c~mv2.jpeg" alt="고양이 만성 치은염 치료 전" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="ba-slot after">
+            <div class="ba-label">4주 후</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_06eabf9704c34888944b67d9345b5098~mv2.jpeg" alt="고양이 만성 치은염 4주 후" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>치료 전:</strong> 잇몸 출혈, 통증, 식욕부진. 기존 항생제·스테로이드 반응 불량</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>2주 후:</strong> 치은염 지수 감소, 출혈 소실, 건식사료 섭취 가능</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>4주 후:</strong> 출혈·유연 완전 소실, 식욕 정상화</div></div>
+        </div>
+        <div class="case-source">출처: 白畑壮 선생님, Clinic Note (2019) (프리모 동물병원)</div>
+      </div>
+
+      <!-- Case 4 -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-icon">🐈</div>
+          <div>
+            <h3>고양이 / 18세 고령묘 / 츄르 혼합 투여</h3>
+          </div>
+        </div>
+        <div class="case-ba">
+          <div class="ba-slot before">
+            <div class="ba-label">Before</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_bf1b7ed0c524483fba695097690ee1fa~mv2.jpeg" alt="고양이 18세 고령묘 치료 전" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="ba-slot after">
+            <div class="ba-label">2개월 후</div>
+            <img src="https://static.wixstatic.com/media/2ccbda_11e6b80c4e4d4c2489bcef8de04da48e~mv2.jpeg" alt="고양이 18세 고령묘 2개월 후" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>투여 전:</strong> GI 2, 구내염 점수 4. 잇몸 출혈·통증으로 식이 제한</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>10회 투여 후:</strong> 구내염 점수 3으로 감소</div></div>
+          <div class="timeline-item"><div class="timeline-dot"></div><div><strong>2개월 후:</strong> GI 1, 구내염 점수 2. 고령묘에서도 효과 확인</div></div>
+        </div>
+        <div class="case-source">출처: 土田靖彦 선생님, MVM 2025 (고리 동물병원)</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 3: TRUST ===== -->
+<section class="trust-section" id="trust">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Section 03 — Trust & Approval</div>
+      <h2>신뢰할 수 있는 이유</h2>
+      <p>세계적 저널 게재와 정부 승인으로 검증된 치료제입니다.</p>
+    </div>
+
+    <div class="trust-grid">
+
+      <!-- Journals -->
+      <div class="journals-card">
+        <h3>게재 저널</h3>
+        <div class="journal-badge">
+          <div class="journal-logo">JV</div>
+          <div>
+            <div class="journal-name">J. of Veterinary Medical Science</div>
+            <div class="journal-desc">일본 수의학회 공식 저널</div>
+          </div>
+        </div>
+        <div class="journal-badge">
+          <div class="journal-logo">SR</div>
+          <div>
+            <div class="journal-name">Scientific Reports</div>
+            <div class="journal-desc">Nature Portfolio 학술지</div>
+          </div>
+        </div>
+        <div class="journal-badge">
+          <div class="journal-logo">日獣</div>
+          <div>
+            <div class="journal-name">日本獣医師会雑誌</div>
+            <div class="journal-desc">일본수의사회 학술지</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-card">
+        <h3>승인 · 출시 타임라인</h3>
+        <div class="timeline">
+          <div class="timeline-entry">
+            <div class="timeline-year">2014년</div>
+            <div class="timeline-desc">일본 농림수산성, 세계 최초 개 치은염 치료제로 승인</div>
+          </div>
+          <div class="timeline-entry">
+            <div class="timeline-year">2023년 2월</div>
+            <div class="timeline-desc">고양이 치은염 적응증 추가 승인</div>
+          </div>
+          <div class="timeline-entry highlight">
+            <div class="timeline-year">2025년 3월</div>
+            <div class="timeline-desc">한국 녹십자수의약품 정식 출시</div>
+          </div>
+          <div class="timeline-entry">
+            <div class="timeline-year">2025년 12월</div>
+            <div class="timeline-desc">Cotton swab 투여법 추가 승인</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+  <div class="container">
+    <h2>인터베리알파, 더 알아보기</h2>
+    <p>제품 정보와 사용법을 인터베리알파 공식 페이지에서 확인하세요.</p>
+    <a href="https://interberry.gcvp.co.kr" class="cta-btn" target="_blank">공식 페이지 바로가기</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 녹십자수의약품. 본 페이지의 학술 데이터는 각 논문의 결과를 요약·재구성한 것이며, 원문은 각 링크를 통해 확인하실 수 있습니다.</p>
+  </div>
+</footer>
+
+<script>
+// ===== CHART.JS GLOBAL DEFAULTS =====
+Chart.defaults.font.family = "'Paperlogy', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#555';
+Chart.defaults.plugins.tooltip.backgroundColor = '#1a1a1a';
+Chart.defaults.plugins.tooltip.titleFont = { weight: '700' };
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.padding = 12;
+
+const RED = '#00644E';
+const RED_LIGHT = 'rgba(0, 100, 78, 0.15)';
+const RED_MID = 'rgba(0, 100, 78, 0.5)';
+const GRAY = '#aaa';
+const GRAY_LIGHT = 'rgba(170,170,170,0.15)';
+const BLUE = '#2563EB';
+const BLUE_LIGHT = 'rgba(37,99,235,0.15)';
+const GREEN = '#16A34A';
+const GREEN_LIGHT = 'rgba(22,163,74,0.15)';
+const ORANGE = '#EA580C';
+const ORANGE_LIGHT = 'rgba(234,88,12,0.15)';
+
+// ===== CHART 1: GI 변화 비교 (Line) — Yamaki et al. 2017 =====
+// 출처: 山木誠也 외, 日獣会誌 70, 589-593 (2017)
+// 경도 치은염 개 18마리 / 4그룹 / 12개월 관찰
+// GI 스코어: 0(정상)~3(자연출혈) / n=각 그룹 치아수 기준
+// * p<0.05, ** p<0.01 (Wilcoxon 부호순위검정, 개시 시점 대비)
+new Chart(document.getElementById('chart1'), {
+  type: 'line',
+  data: {
+    labels: ['0개월', '1개월', '2개월', '3개월', '6개월', '9개월', '12개월'],
+    datasets: [
+      {
+        label: 'IBα + 구강케어 (n=40치아)',
+        // 그룹1: 3개월 최저, 12개월까지 전 기간 유의하게 낮은 GI 유지 (p<0.05~0.01)
+        data: [0.85, 0.55, 0.40, 0.30, 0.33, 0.36, 0.38],
+        borderColor: RED,
+        backgroundColor: RED_LIGHT,
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: RED,
+        tension: 0.3,
+        fill: true
+      },
+      {
+        label: 'IBα 단독 (n=40치아)',
+        // 그룹2: 3개월 최저, 9개월까지 유의하게 낮음, 이후 완만한 증가 → 12개월에 개시값 수준 회귀
+        data: [0.85, 0.55, 0.42, 0.32, 0.40, 0.48, 0.82],
+        borderColor: BLUE,
+        backgroundColor: BLUE_LIGHT,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: BLUE,
+        tension: 0.3,
+        fill: false
+      },
+      {
+        label: '구강케어 단독 (n=32치아)',
+        // 그룹3: 연간 큰 변화 없음 (진행 억제는 가능, 경감은 인정되지 않음)
+        data: [0.28, 0.26, 0.25, 0.24, 0.25, 0.26, 0.28],
+        borderColor: GREEN,
+        backgroundColor: GREEN_LIGHT,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: GREEN,
+        tension: 0.3,
+        fill: false
+      },
+      {
+        label: '무처치 (n=32치아)',
+        // 그룹4: 점진적 증가, 9개월 이후 개시 대비 유의하게 높음 (p<0.05~0.01)
+        data: [0.28, 0.30, 0.33, 0.36, 0.48, 0.72, 0.92],
+        borderColor: GRAY,
+        backgroundColor: GRAY_LIGHT,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: GRAY,
+        borderDash: [5, 5],
+        tension: 0.3,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: GI ${ctx.parsed.y.toFixed(2)}`
+        }
+      }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: '치은염 지수 (GI, 0~3점)', font: { weight: '600' } },
+        min: 0, max: 1.4,
+        ticks: { stepSize: 0.2 },
+        grid: { color: 'rgba(0,0,0,0.04)' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ===== CHART 2: P. gulae 음성 전환율 — Nomura et al. 2020 =====
+// 출처: Nomura R. 외, Scientific Reports 10:3113 (2020)
+// 개 52마리 / 전원 P. gulae 양성 상태에서 치주치료 후 5주 추적
+// 음성 전환: 대조군 0/12(0%), Clindamycin 2/10(20%), IBα 4/14(28.6%), 병용 6/16(37.5%)
+new Chart(document.getElementById('chart2'), {
+  type: 'bar',
+  data: {
+    labels: ['대조군\n(무처치)', 'Clindamycin\n단독', 'IBα\n단독', 'Clindamycin\n+ IBα 병용'],
+    datasets: [{
+      label: 'P. gulae 음성 전환율 (%)',
+      data: [0, 20, 28.6, 37.5],
+      backgroundColor: [
+        'rgba(170,170,170,0.6)',
+        'rgba(37,99,235,0.4)',
+        'rgba(37,99,235,0.85)',
+        RED
+      ],
+      borderRadius: 8,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `음성 전환율: ${ctx.parsed.y}%`
+        }
+      }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: 'P. gulae 음성 전환율 (%)', font: { weight: '600' } },
+        min: 0, max: 50,
+        ticks: { callback: val => val + '%' },
+        grid: { color: 'rgba(0,0,0,0.04)' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ===== CHART 3: 구강 내 티올 농도 변화 — Shirahata et al. 2020 =====
+// 출처: 白畑壮 외, VETS CASE REPORT (2020)
+// 스케일링 후 개 30마리 / IBα 도포군(n=11) vs 비도포군(n=19)
+// OraStrip® 스코어 기준 (0~5점) / 12개월 추적
+// ** p<0.01, * p<0.05 (Wilcoxon 부호순위검정, 도포군-비도포군 군간 비교)
+new Chart(document.getElementById('chart3'), {
+  type: 'line',
+  data: {
+    labels: ['스케일링 전', '직후', '1개월', '2개월', '3개월', '4개월', '6개월', '12개월'],
+    datasets: [
+      {
+        label: 'IBα 도포군 (n=11)',
+        // 도포군: 스케일링 후 낮게 유지 → 12개월간 티올 농도 상승 유의하게 억제
+        data: [3.2, 1.8, 1.9, 2.0, 2.1, 2.1, 2.2, 2.8],
+        borderColor: RED,
+        backgroundColor: RED_LIGHT,
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointBackgroundColor: RED,
+        tension: 0.3,
+        fill: true
+      },
+      {
+        label: '비도포군 (n=19)',
+        // 비도포군: 스케일링 직후 낮아졌다가 시간 경과에 따라 티올 농도 재상승
+        data: [3.2, 1.8, 2.3, 2.8, 3.2, 3.5, 3.9, 4.1],
+        borderColor: GRAY,
+        backgroundColor: GRAY_LIGHT,
+        borderWidth: 2,
+        pointRadius: 5,
+        pointBackgroundColor: GRAY,
+        borderDash: [5, 5],
+        tension: 0.3,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}점`
+        }
+      }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: '구강 내 티올 농도 (OraStrip® 스코어, 0~5점)', font: { weight: '600' } },
+        min: 0, max: 5,
+        ticks: { stepSize: 1 },
+        grid: { color: 'rgba(0,0,0,0.04)' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ===== CHART 4: Cotton Swab 투여법 임상시험 — 호쿠산 2025 =====
+// 출처: InterBerry α Cotton swab 투여법 임상시험 (2025.12 일본 농림수산성 승인)
+// 개 n=14 (No.03 탈락 제외), 고양이 n=14 / 주 2회, 5주간, 총 10회 도포
+// GI: Gingival Index (0, 0.5, 1, 2 / 4단계), 티올: OraStrip® (0~5단계)
+// ** p<0.01, * p<0.05 (Wilcoxon 부호순위검정, 0개월 대비)
+new Chart(document.getElementById('chart4'), {
+  type: 'bar',
+  data: {
+    labels: ['투여 전\n(0개월)', '투여 중\n(1개월)', '투여 후\n(2개월)'],
+    datasets: [
+      {
+        label: '개 — GI 점수 (평균)',
+        // 개 GI: 0개월 → 1개월 → 2개월 모두 p<0.01
+        data: [0.75, 0.42, 0.35],
+        backgroundColor: RED,
+        borderRadius: 6,
+        barPercentage: 0.55,
+        categoryPercentage: 0.75
+      },
+      {
+        label: '개 — 티올 점수 (평균)',
+        // 개 티올: 0개월 → 1개월 → 2개월 모두 p<0.01
+        data: [2.0, 1.5, 1.1],
+        backgroundColor: RED_MID,
+        borderRadius: 6,
+        barPercentage: 0.55,
+        categoryPercentage: 0.75
+      },
+      {
+        label: '고양이 — GI 점수 (평균)',
+        // 고양이 GI: 0개월 → 1개월(p<0.01), 2개월(p<0.01)
+        data: [0.20, 0.11, 0.09],
+        backgroundColor: BLUE,
+        borderRadius: 6,
+        barPercentage: 0.55,
+        categoryPercentage: 0.75
+      },
+      {
+        label: '고양이 — 티올 점수 (평균)',
+        // 고양이 티올: 0개월 → 1개월(p<0.05), 2개월(p<0.01)
+        data: [3.1, 2.7, 2.0],
+        backgroundColor: 'rgba(37,99,235,0.5)',
+        borderRadius: 6,
+        barPercentage: 0.55,
+        categoryPercentage: 0.75
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+        }
+      }
+    },
+    scales: {
+      y: {
+        title: { display: true, text: '점수 (GI: 0~2점 / 티올: 0~5점)', font: { weight: '600' } },
+        min: 0, max: 4,
+        ticks: { stepSize: 0.5 },
+        grid: { color: 'rgba(0,0,0,0.04)' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
