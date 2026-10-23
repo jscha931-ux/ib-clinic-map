@@ -24,8 +24,6 @@ button{background:#fff;cursor:pointer;transition:background .15s}
 button:hover{background:#f0f0f0}
 #btnMyLoc{background:#e8f0fe;border-color:#4a90d9;color:#1a56c4;font-weight:600}
 #btnMyLoc:hover{background:#d0e2fc}
-#btnFull{display:none}
-body.embedded #btnFull{display:inline-block}
 .naver{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:6px;background:#03c75a;color:#fff !important;text-decoration:none;font-weight:600}
 
 /* 레이아웃 */
@@ -78,8 +76,13 @@ thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
 /* 반응형 */
 @media(max-width:768px){
   #content{flex-direction:column;gap:12px}
-  #map{height:55vh}
-  #tableWrap{max-height:42vh}
+  /* 고정 높이: vh 는 iframe 높이 기준이라 상자 안 스크롤이 생김. Wix 상자 높이는 전체 높이에 맞춤 */
+  #map{height:300px;min-height:0}
+  /* 좁은 폭에서 3칸 표는 한 행이 90px 넘게 접힘 → 병원명 아래 주소를 쌓는 목록형 */
+  #listTable thead, #listTable td:nth-child(1){display:none}
+  #listTable tr{display:block;padding:8px 12px;border-bottom:1px solid #eee}
+  #listTable td{display:block;border:0;padding:0}
+  #listTable td:nth-child(3){font-size:12px;color:#777}
 }
 @media(min-width:769px){
   #content{flex-direction:row;gap:20px}
@@ -100,9 +103,7 @@ thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
     <input id="searchBox" type="text" placeholder="병원명 또는 주소 검색 (Enter)"/>
     <button id="btnSearch">검색</button>
     <button id="btnReset">초기화</button>
-    <button id="btnMyLoc">📍 내 주변</button>
-    <button id="btnFull">⛶ 전체 화면</button>
-    <span class="muted" id="stat"></span>
+    <button id="btnMyLoc">📍 내 주변</button>    <span class="muted" id="stat"></span>
   </div>
 
   <div id="content">
@@ -145,12 +146,12 @@ thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
 ===================================================== */
 let map, allPoints = [], liveMarkers = [], currentRowsInView = [];
 let clusterGroup;
-let page = 1, pageSize = 15;
+let page = 1, pageSize = matchMedia('(max-width:768px)').matches ? 5 : 15;
 let sortCol = '', sortDir = 'asc';  // 정렬 상태
 let myLocMarker = null;
-// Wix HTML 임베드 iframe 은 위치 권한이 막혀 있어(allow="fullscreen" 뿐) 위치·큰 지도는 이 페이지를 새 창으로 연다.
-const MAP_URL = 'https://jscha931-ux.github.io/ib-clinic-map/map.html';
+// Wix HTML 임베드 iframe 은 위치 권한이 막혀 있어(allow="fullscreen" 뿐) 위치는 Wix 페이지 코드(Velo)가 받아 넘겨준다.
 const EMBEDDED = window.top !== window;
+let locTimer = null;
 let nearFrom = null;  // '내 주변' 이후 목록을 거리순으로
 
 /* =====================================================
@@ -369,20 +370,31 @@ function bindSortHeaders() {
    내 위치 버튼
 ===================================================== */
 function bindMyLoc() {
-  document.getElementById('btnFull').addEventListener('click', () => window.open(MAP_URL, '_blank'));
   document.getElementById('btnMyLoc').addEventListener('click', locateMe);
 }
 
 function locateMe() {
-    if (EMBEDDED) { window.open(MAP_URL + '?near=1', '_blank'); return; }
-    if (!navigator.geolocation) {
-      alert('이 브라우저에서는 위치 정보를 사용할 수 없습니다.');
+    showLoading(true);
+    if (EMBEDDED) {  // Velo 가 { type:'ibMyLoc', lat, lng } 또는 { type:'ibLocErr' } 로 답한다
+      window.parent.postMessage({ type: 'ibLocate' }, '*');
+      clearTimeout(locTimer);
+      locTimer = setTimeout(locFail, 20000);
       return;
     }
-    showLoading(true);
-    navigator.geolocation.getCurrentPosition(pos => {
+    if (!navigator.geolocation) { locFail(); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => showMyLoc(pos.coords.latitude, pos.coords.longitude), locFail);
+}
+
+function locFail() {
+  clearTimeout(locTimer);
+  showLoading(false);
+  alert('위치 정보를 가져올 수 없습니다. 휴대폰 설정에서 브라우저의 위치 권한을 허용해 주세요.');
+}
+
+function showMyLoc(lat, lng) {
+      clearTimeout(locTimer);
       showLoading(false);
-      const lat = pos.coords.latitude, lng = pos.coords.longitude;
       if (myLocMarker) map.removeLayer(myLocMarker);
       myLocMarker = L.circleMarker([lat, lng], {
         radius: 9, color: '#fff', fillColor: '#4a90d9',
@@ -393,10 +405,6 @@ function locateMe() {
       const near = liveMarkers.map(m => m.getLatLng())
         .sort((a, b) => me.distanceTo(a) - me.distanceTo(b)).slice(0, 5);
       map.fitBounds(L.latLngBounds([me, ...near]), { padding: [40, 40], maxZoom: 15 });
-    }, () => {
-      showLoading(false);
-      alert('위치 정보를 가져올 수 없습니다. 휴대폰 설정에서 브라우저의 위치 권한을 허용해 주세요.');
-    });
 }
 
 /* =====================================================
@@ -478,7 +486,10 @@ function initMap(center, dataRows) {
 ===================================================== */
 window.addEventListener('message', async e => {
   if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'ibMyLoc') return map && showMyLoc(e.data.lat, e.data.lng);
+  if (e.data.type === 'ibLocErr') return locFail();
   const { dataUrl, center, rows } = e.data;
+  if (map || !(dataUrl || rows)) return;  // 이미 초기화됨(Velo 가 onReady·ibReady 두 번 보낼 수 있음) 또는 남의 메시지
   showLoading(true);
   try {
     let data = rows;
@@ -497,7 +508,8 @@ window.addEventListener('message', async e => {
    데모 데이터 (Wix 연동 시 제거 또는 주석 처리)
 ===================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-  if (EMBEDDED) { document.body.classList.add('embedded'); return; }  // Wix postMessage 대기
+  // Wix: 로드 전에 보낸 postMessage 는 유실될 수 있어 준비됐다고 알리고 데이터 주소를 기다린다
+  if (EMBEDDED) { window.parent.postMessage({ type: 'ibReady' }, '*'); return; }
   // 단독 페이지(GitHub Pages): 데이터 직접 로드, ?near=1 이면 바로 내 위치
   try {
     const data = await (await fetch('clinics.json', { cache: 'no-store' })).json();
