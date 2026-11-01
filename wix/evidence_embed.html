@@ -114,12 +114,12 @@ section { padding: 80px 0; }
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: 28px;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, transform 150ms cubic-bezier(.23,1,.32,1);
   display: flex;
   flex-direction: column;
 }
 @media (hover: hover) and (pointer: fine) {
-  .paper-card:hover { border-color: var(--brand-red); }
+  .paper-card:hover { border-color: var(--brand-red); transform: translateY(-2px); }
 }
 .paper-card .journal-tag {
   display: inline-block;
@@ -233,10 +233,10 @@ section { padding: 80px 0; }
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, transform 150ms cubic-bezier(.23,1,.32,1);
 }
 @media (hover: hover) and (pointer: fine) {
-  .case-card:hover { border-color: var(--brand-red); }
+  .case-card:hover { border-color: var(--brand-red); transform: translateY(-2px); }
 }
 .case-card .case-header {
   background: var(--brand-red);
@@ -802,7 +802,18 @@ footer {
 
 <script>
 // ===== CHART.JS GLOBAL DEFAULTS =====
-Chart.defaults.animation = false;
+// 그래프: 화면에 들어올 때 한 번만 0.6s 재생. 모션 줄이기 설정이면 재생 없음.
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+Chart.defaults.animation = reduceMotion ? false : { duration: 600, easing: 'easeOutCubic' };
+function lazyChart(id, config) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!('IntersectionObserver' in window)) { new Chart(el, config); return; }
+  const io = new IntersectionObserver((entries) => {
+    if (entries.some(e => e.isIntersecting)) { io.disconnect(); new Chart(el, config); }
+  }, { threshold: 0.3 });
+  io.observe(el);
+}
 Chart.defaults.font.family = "'Paperlogy', sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#555';
@@ -828,7 +839,7 @@ const ORANGE_LIGHT = 'rgba(234,88,12,0.15)';
 // 경도 치은염 개 18마리 / 4그룹 / 12개월 관찰
 // GI 스코어: 0(정상)~3(자연출혈) / n=각 그룹 치아수 기준
 // * p<0.05, ** p<0.01 (Wilcoxon 부호순위검정, 개시 시점 대비)
-new Chart(document.getElementById('chart1'), {
+lazyChart('chart1', {
   type: 'line',
   data: {
     labels: ['0개월', '1개월', '2개월', '3개월', '6개월', '9개월', '12개월'],
@@ -911,7 +922,7 @@ new Chart(document.getElementById('chart1'), {
 // 출처: Nomura R. 외, Scientific Reports 10:3113 (2020)
 // 개 52마리 / 전원 P. gulae 양성 상태에서 치주치료 후 5주 추적
 // 음성 전환: 대조군 0/12(0%), Clindamycin 2/10(20%), IBα 4/14(28.6%), 병용 6/16(37.5%)
-new Chart(document.getElementById('chart2'), {
+lazyChart('chart2', {
   type: 'bar',
   data: {
     labels: ['대조군\n(무처치)', 'Clindamycin\n단독', 'IBα\n단독', 'Clindamycin\n+ IBα 병용'],
@@ -955,7 +966,7 @@ new Chart(document.getElementById('chart2'), {
 // 스케일링 후 개 30마리 / IBα 도포군(n=11) vs 비도포군(n=19)
 // OraStrip® 스코어 기준 (0~5점) / 12개월 추적
 // ** p<0.01, * p<0.05 (Wilcoxon 부호순위검정, 도포군-비도포군 군간 비교)
-new Chart(document.getElementById('chart3'), {
+lazyChart('chart3', {
   type: 'line',
   data: {
     labels: ['스케일링 전', '직후', '1개월', '2개월', '3개월', '4개월', '6개월', '12개월'],
@@ -1015,7 +1026,7 @@ new Chart(document.getElementById('chart3'), {
 // 개 n=14 (No.03 탈락 제외), 고양이 n=14 / 주 2회, 5주간, 총 10회 도포
 // GI: Gingival Index (0, 0.5, 1, 2 / 4단계), 티올: OraStrip® (0~5단계)
 // ** p<0.01, * p<0.05 (Wilcoxon 부호순위검정, 0개월 대비)
-new Chart(document.getElementById('chart4'), {
+lazyChart('chart4', {
   type: 'bar',
   data: {
     labels: ['투여 전\n(0개월)', '투여 중\n(1개월)', '투여 후\n(2개월)'],
