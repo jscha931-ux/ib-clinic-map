@@ -228,8 +228,8 @@ def write_docx(region, total):
         st.element.rPr.rFonts.set(
             "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}eastAsia", font)
 
-    doc.add_heading("인터베리-알파 취급 동물병원 목록", 1)
-    doc.add_paragraph("기준일 %s · 전국 %d개 병원. 인터베리-알파는 동물병원에서만 취급하며, "
+    doc.add_heading("인터베리알파 취급 동물병원 목록", 1)
+    doc.add_paragraph("기준일 %s · 전국 %d개 병원. 인터베리알파는 동물병원에서만 취급하며, "
                       "구입과 사용은 담당 수의사와 상담하세요."
                       % (datetime.date.today().isoformat(), total))
     for sido, rows in region.items():
