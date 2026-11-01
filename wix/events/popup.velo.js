@@ -11,7 +11,8 @@ $w.onReady(() => {
 
   const go = url => { wixWindowFrontend.lightbox.close(); wixLocationFrontend.to(url); };
 
-  if (ev.image) $w('#popImage').src = ev.image;
+  if (ev.image) { $w('#popImage').src = ev.image; $w('#popImage').expand(); }
+  else $w('#popImage').collapse();
   $w('#popTitle').text = ev.title || '';
   $w('#popPeriod').text = period(ev);
   $w('#popImage').onClick(() => go(eventUrl(ev)));

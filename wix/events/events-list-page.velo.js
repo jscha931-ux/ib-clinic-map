@@ -9,7 +9,9 @@ $w.onReady(async () => {
   const rows = listItems(items);
 
   $w('#eventRepeater').onItemReady(($item, ev) => {
-    if (ev.image) $item('#evImage').src = ev.image;
+    // 이미지 없으면 Wix 기본 이미지 대신 칸을 접는다
+    if (ev.image) { $item('#evImage').src = ev.image; $item('#evImage').expand(); }
+    else $item('#evImage').collapse();
     $item('#evTitle').text = ev.title || '';
     $item('#evPeriod').text = period(ev);
     $item('#evStatus').text = LABEL[ev._status];
@@ -18,7 +20,10 @@ $w.onReady(async () => {
   });
   $w('#eventRepeater').data = rows;
 
-  if (!rows.length) {
+  // 리피터는 에디터에서 '로드 시 숨김'으로 두고, 데이터가 채워진 뒤 페이드로 보인다
+  if (rows.length) {
+    $w('#eventRepeater').show('fade', { duration: 200 });
+  } else {
     $w('#eventRepeater').collapse();
     $w('#evEmpty').expand();
   }
