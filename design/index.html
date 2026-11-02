@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko" data-v="a1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인터베리알파 홈 시안 (A-1 / A-2)</title>
+<!--
+  대비(WCAG 2.1, 본문 기준 4.5:1 이상) — 실제 계산값
+  #FFFFFF on #00644E  7.16  (A-1 히어로·근거 수치 밴드 본문/숫자, 기본 버튼 글자)
+  #D7EBE4 on #00644E  5.76  (A-1 녹색 영역 보조문·각주)
+  #00644E on #FFFFFF  7.16  (제목·숫자·링크·보조 버튼)
+  #00644E on #F4F7F6  6.64  (회색 섹션 제목·숫자)
+  #004D3C on #FFFFFF  9.87  (hover 색)
+  #1A2B26 on #FFFFFF 14.82  (본문)
+  #1A2B26 on #F4F7F6 13.74
+  #4A5A55 on #FFFFFF  7.28  (보조 본문·각주)
+  #4A5A55 on #F4F7F6  6.75
+  카드 테두리 #D5DED9 는 장식선(텍스트 아님).
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+@font-face { font-family: "PL7"; src: local("Paperlogy 7 Bold"), local("Paperlogy-7Bold"); }
+@font-face { font-family: "PL6"; src: local("Paperlogy 6 SemiBold"), local("Paperlogy-6SemiBold"); }
+:root {
+  --g: #00644E; --g-dark: #004D3C; --g-soft: #D7EBE4;
+  --ink: #1A2B26; --sub: #4A5A55; --line: #D5DED9; --bg2: #F4F7F6; --white: #FFFFFF;
+  --head: "PL7", "Paperlogy 7 Bold", sans-serif;
+  --head2: "PL6", "Paperlogy 6 SemiBold", "PL7", sans-serif;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 80px; }
+body { margin: 0; font-family: "Pretendard", sans-serif; font-size: 17px; line-height: 1.65; color: var(--ink); background: var(--white); word-break: keep-all; }
+h1, h2, h3 { font-family: var(--head); line-height: 1.3; margin: 0; color: var(--g); }
+h1 { font-size: 48px; }
+h2 { font-size: 36px; }
+h3 { font-family: var(--head2); font-size: 22px; }
+p { margin: 0; }
+a { color: var(--g); }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+section { padding: 96px 0; }
+.lead { font-size: 22px; color: var(--sub); margin-top: 16px; max-width: 680px; }
+
+/* 헤더: sticky, 흰 배경, 메뉴 17px */
+header { position: sticky; top: 0; z-index: 10; background: var(--white); border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 72px; }
+.brand { font-family: var(--head); font-size: 22px; color: var(--g); text-decoration: none; white-space: nowrap; }
+nav { display: flex; gap: 28px; flex-wrap: wrap; }
+nav a { font-size: 17px; font-weight: 600; color: var(--ink); text-decoration: none; white-space: nowrap; }
+nav a[aria-current] { color: var(--g); }
+
+/* 버튼 */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 12px; font-family: var(--head2); font-size: 17px; text-decoration: none; border: 2px solid var(--g); transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--g); color: var(--white); }
+.btn-secondary { background: var(--white); color: var(--g); }
+@media (hover: hover) {
+  nav a:hover { color: var(--g); }
+  .btn-primary:hover { background: var(--g-dark); border-color: var(--g-dark); }
+  .btn-secondary:hover { color: var(--g-dark); border-color: var(--g-dark); }
+  a.src:hover { color: var(--g-dark); }
+}
+.ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+
+/* 히어로 */
+.hero { padding: 80px 0; }
+.hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+.hero h1 { color: var(--g); }
+.hero .lead { color: var(--sub); }
+.pkg { display: flex; justify-content: center; align-items: center; background: var(--bg2); border-radius: 16px; padding: 32px; aspect-ratio: 1 / 1; }
+.pkg img { width: 78%; height: auto; display: block; animation: rise 400ms var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* 근거 수치 */
+.stats h2 { margin-bottom: 40px; }
+.stats ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.stats li { padding-top: 20px; border-top: 2px solid var(--g); }
+.num { font-family: var(--head); font-size: 48px; line-height: 1.1; color: var(--g); font-variant-numeric: tabular-nums; }
+.num small { font-size: 28px; }
+.stats .desc { margin-top: 12px; color: var(--ink); }
+a.src { display: inline-block; margin-top: 12px; font-size: 15px; color: var(--sub); }
+
+/* 공통 카드 */
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 32px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 40px; }
+.step { font-family: var(--head); font-size: 28px; color: var(--g); display: block; margin-bottom: 8px; }
+.card p { margin-top: 12px; color: var(--sub); }
+.alt { background: var(--bg2); }
+
+/* 타임라인 */
+.tl { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+.tl li { padding: 24px 24px 0 0; }
+.tl b { display: block; font-family: var(--head); font-size: 22px; color: var(--g); }
+.tl p { margin-top: 8px; }
+
+/* 입점 동물병원 CTA */
+.find { border-top: 1px solid var(--line); }
+.find .wrap { display: flex; justify-content: space-between; align-items: center; gap: 32px; flex-wrap: wrap; }
+
+footer { background: var(--bg2); padding: 48px 0; font-size: 15px; color: var(--sub); }
+footer strong { color: var(--ink); font-family: var(--head2); font-size: 17px; }
+footer p + p { margin-top: 8px; }
+
+/* ===== A-1 그린 앵커형: 히어로·근거 수치 밴드만 녹색 면 ===== */
+[data-v="a1"] .hero { background: var(--g); }
+[data-v="a1"] .hero h1 { color: var(--white); }
+[data-v="a1"] .hero .lead { color: var(--g-soft); }
+[data-v="a1"] .hero .btn-primary { background: var(--white); color: var(--g); border-color: var(--white); }
+[data-v="a1"] .hero .btn-secondary { background: transparent; color: var(--white); border-color: var(--white); }
+[data-v="a1"] .stats { background: var(--g); }
+[data-v="a1"] .stats h2, [data-v="a1"] .stats .num, [data-v="a1"] .stats .desc { color: var(--white); }
+[data-v="a1"] .stats li { border-top-color: var(--g-soft); }
+[data-v="a1"] .stats a.src { color: var(--g-soft); }
+@media (hover: hover) {
+  [data-v="a1"] .hero .btn-primary:hover { background: var(--g-soft); border-color: var(--g-soft); }
+  [data-v="a1"] .hero .btn-secondary:hover { background: var(--g-dark); color: var(--white); border-color: var(--white); }
+  [data-v="a1"] .stats a.src:hover { color: var(--white); }
+}
+/* ===== A-2 화이트 포인트형: 흰 면 + 녹색 포인트(CTA·숫자·얇은 선) ===== */
+[data-v="a2"] .hero { border-bottom: 1px solid var(--line); }
+[data-v="a2"] .stats { background: var(--white); }
+
+/* 시안 전환 스위치 (시안 확인용, 실제 사이트에는 넣지 않음) */
+.switch { position: fixed; right: 16px; bottom: 16px; z-index: 20; display: flex; background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.switch button { font: 600 15px "Pretendard", sans-serif; border: 0; background: none; color: var(--ink); padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background-color 150ms ease, color 150ms ease, transform 100ms ease; }
+.switch button:active { transform: scale(.97); }
+.switch button[aria-pressed="true"] { background: var(--g); color: var(--white); }
+
+@media (max-width: 960px) {
+  nav { display: none; } /* 시안: 모바일 메뉴는 Wix 햄버거 메뉴 사용 */
+  .hero .wrap, .grid3, .grid2 { grid-template-columns: 1fr; }
+  .stats ul, .tl { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  section { padding: 64px 0; }
+  .hero { padding: 48px 0; }
+  h1 { font-size: 36px; }
+  h2 { font-size: 28px; }
+  .lead { font-size: 17px; }
+  .stats ul, .tl { grid-template-columns: 1fr; }
+  .card { padding: 24px; }
+  .btn { width: 100%; }
+  .switch { left: 16px; right: 16px; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pkg img { animation: none; }
+  .btn, .switch button, nav a { transition: none; }
+  .btn:active, .switch button:active { transform: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#">인터베리알파</a>
+    <nav aria-label="주요 메뉴">
+      <a href="#" aria-current="page">인터베리알파</a>
+      <a href="#what">치은염이란?</a>
+      <a href="https://interberry.gcvp.co.kr/evidence">연구 데이터</a>
+      <a href="#how">사용 방법</a>
+      <a href="https://interberry.gcvp.co.kr/clinic-map">입점 동물병원</a>
+      <a href="#">FAQ</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>개·고양이 치은염,<br>인터베리알파로 치료합니다</h1>
+        <p class="lead">세계 최초로 승인된 개 치은염 치료제. 2023년 고양이 적응증이 추가되었습니다.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="https://interberry.gcvp.co.kr/evidence">연구 데이터 보기</a>
+          <a class="btn btn-secondary" href="https://interberry.gcvp.co.kr/clinic-map">입점 동물병원 찾기</a>
+        </div>
+      </div>
+      <div class="pkg">
+        <img src="https://static.wixstatic.com/media/05cd91_45d77fb7559948b8a65b6b513b1b535f~mv2.png/v1/fill/w_481,h_677,al_c,q_85/interberry-alpha-package.png"
+             width="481" height="677" alt="인터베리알파 제품 패키지" fetchpriority="high">
+      </div>
+    </div>
+  </section>
+
+  <section class="stats" aria-labelledby="stats-h">
+    <div class="wrap">
+      <h2 id="stats-h">근거 수치</h2>
+      <ul>
+        <li>
+          <div class="num" data-count="8">8<small>일</small></div>
+          <p class="desc">투여 종료 8일 후 주요 원인균 미검출</p>
+          <a class="src" href="https://interberry.gcvp.co.kr/evidence">출처: 연구 데이터 페이지</a>
+        </li>
+        <li>
+          <div class="num" data-count="12">12<small>개월+</small></div>
+          <p class="desc">12개월 이상 효과 지속 (구강케어 병용 시)</p>
+          <a class="src" href="https://interberry.gcvp.co.kr/evidence">출처: 연구 데이터 페이지</a>
+        </li>
+        <li>
+          <div class="num" data-count="37.5">37.5<small>%</small></div>
+          <p class="desc">P. gulae 음성 전환율 (병용군)</p>
+          <a class="src" href="https://interberry.gcvp.co.kr/evidence">출처: 연구 데이터 페이지</a>
+        </li>
+        <li>
+          <div class="num">유의한 감소</div>
+          <p class="desc">고양이 치은염·구취 유의한 감소</p>
+          <a class="src" href="https://interberry.gcvp.co.kr/evidence">출처: 연구 데이터 페이지</a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="what" class="alt">
+    <div class="wrap">
+      <h2>치은염이란?</h2>
+      <p class="lead">잇몸 가장자리에 생기는 염증입니다. 초기에 치료하는 것이 중요합니다.</p>
+      <div class="grid3">
+        <div class="card"><span class="step">1</span><h3>치태가 쌓입니다</h3><p>치아 표면에 세균이 모여 치태가 생깁니다.</p></div>
+        <div class="card"><span class="step">2</span><h3>잇몸이 붉게 붓습니다</h3><p>세균에 반응해 잇몸 가장자리에 염증이 생기고, 구취가 나타날 수 있습니다.</p></div>
+        <div class="card"><span class="step">3</span><h3>수의사와 상담합니다</h3><p>동물병원에서 진단을 받고 치료 방법을 정합니다.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>사용 방법</h2>
+      <p class="lead">동물병원에서 수의사의 안내에 따라 투여합니다.</p>
+      <div class="grid2">
+        <div class="card"><h3>Cotton swab 투여</h3><p>면봉에 묻혀 잇몸에 직접 바르는 방법입니다. 2025년 12월 추가 승인되었습니다.</p></div>
+        <div class="card"><h3>혼합 투여</h3><p>정해진 방법으로 혼합해 투여합니다. 자세한 용량과 횟수는 수의사와 상담하세요.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" aria-labelledby="tl-h">
+    <div class="wrap">
+      <h2 id="tl-h">승인·출시</h2>
+      <ol class="tl">
+        <li><b>2014</b><p>일본 농림수산성, 세계 최초 개 치은염 치료제로 승인</p></li>
+        <li><b>2023.02</b><p>고양이 치은염 적응증 추가 승인</p></li>
+        <li><b>2025.03</b><p>한국 녹십자수의약품 정식 출시</p></li>
+        <li><b>2025.12</b><p>Cotton swab 투여법 추가 승인</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="find">
+    <div class="wrap">
+      <div>
+        <h2>가까운 입점 동물병원</h2>
+        <p class="lead">인터베리알파를 취급하는 동물병원을 지도에서 찾아보세요.</p>
+      </div>
+      <a class="btn btn-primary" href="https://interberry.gcvp.co.kr/clinic-map">입점 동물병원 찾기</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>녹십자수의약품</strong></p>
+    <p>인터베리알파는 동물용의약품입니다. 동물병원에서 수의사와 상담 후 사용하세요.</p>
+  </div>
+</footer>
+
+<div class="switch" role="group" aria-label="시안 전환">
+  <button type="button" data-set="a1">A-1 그린 앵커형</button>
+  <button type="button" data-set="a2">A-2 화이트 포인트형</button>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btns = document.querySelectorAll('.switch button');
+  function setV(v) {
+    if (v !== 'a1' && v !== 'a2') v = 'a1';
+    root.dataset.v = v;
+    btns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.set === v)); });
+  }
+  setV(new URLSearchParams(location.search).get('v'));
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      setV(b.dataset.set);
+      history.replaceState(null, '', '?v=' + b.dataset.set);
+    });
+  });
+
+  // 숫자 카운트업: 최종값은 HTML에 그대로 있음. 모션 줄이기 설정 시 실행 안 함.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      var el = e.target, node = el.firstChild, end = parseFloat(el.dataset.count);
+      var dec = (el.dataset.count.split('.')[1] || '').length, t0 = performance.now();
+      (function tick(now) {
+        var p = Math.min((now - t0) / 600, 1), k = 1 - Math.pow(1 - p, 3);
+        node.nodeValue = (end * k).toFixed(dec);
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach(function (el) { io.observe(el); });
+})();
+</script>
+</body>
+</html>
