@@ -41,19 +41,12 @@ section { padding: 80px 0; }
 
 /* ===== HERO / BRIDGE ===== */
 .hero {
-  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  background: var(--brand-red);
   color: #fff;
   padding: 100px 0 80px;
   text-align: center;
   position: relative;
   overflow: hidden;
-}
-.hero::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 60px;
-  background: linear-gradient(to top, #fafafa, transparent);
 }
 .hero-badge {
   display: block;
@@ -159,6 +152,7 @@ section { padding: 80px 0; }
   font-weight: 800;
   color: var(--brand-red);
   line-height: 1.3;
+  font-variant-numeric: tabular-nums;
 }
 .paper-card .key-stat .stat-desc {
   font-size: 13px;
@@ -245,16 +239,6 @@ section { padding: 80px 0; }
   display: flex;
   align-items: center;
   gap: 10px;
-}
-.case-card .case-header .case-icon {
-  font-size: 20px;
-  width: 36px;
-  height: 36px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .case-card .case-header h3 { font-size: 15px; font-weight: 700; }
 .case-ba {
@@ -343,12 +327,9 @@ section { padding: 80px 0; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-light);
-  border-radius: 10px;
-  margin-bottom: 10px;
+  padding: 14px 0;
 }
-.journal-badge:last-child { margin-bottom: 0; }
+.journal-badge + .journal-badge { border-top: 1px solid var(--border-light); }
 .journal-logo {
   width: 44px;
   height: 44px;
@@ -423,7 +404,7 @@ section { padding: 80px 0; }
 
 /* ===== CTA FOOTER ===== */
 .cta-section {
-  background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  background: var(--brand-red);
   color: #fff;
   text-align: center;
   padding: 64px 0;
@@ -617,7 +598,6 @@ footer {
       <!-- Case 1 -->
       <div class="case-card">
         <div class="case-header">
-          <div class="case-icon">🐕</div>
           <div>
             <h3>개 / 치주치료 후 Clindamycin + IBα 병용</h3>
           </div>
@@ -642,7 +622,6 @@ footer {
       <!-- Case 2 -->
       <div class="case-card">
         <div class="case-header">
-          <div class="case-icon">🐈</div>
           <div>
             <h3>고양이 / FIV 양성 / 치은구내염</h3>
           </div>
@@ -668,7 +647,6 @@ footer {
       <!-- Case 3 -->
       <div class="case-card">
         <div class="case-header">
-          <div class="case-icon">🐈</div>
           <div>
             <h3>고양이 / 만성 치은염</h3>
           </div>
@@ -694,7 +672,6 @@ footer {
       <!-- Case 4 -->
       <div class="case-card">
         <div class="case-header">
-          <div class="case-icon">🐈</div>
           <div>
             <h3>고양이 / 18세 고령묘 / 츄르 혼합 투여</h3>
           </div>
@@ -825,14 +802,14 @@ Chart.defaults.plugins.tooltip.padding = 12;
 const RED = '#00644E';
 const RED_LIGHT = 'rgba(0, 100, 78, 0.15)';
 const RED_MID = 'rgba(0, 100, 78, 0.5)';
-const GRAY = '#aaa';
-const GRAY_LIGHT = 'rgba(170,170,170,0.15)';
-const BLUE = '#2563EB';
-const BLUE_LIGHT = 'rgba(37,99,235,0.15)';
-const GREEN = '#16A34A';
-const GREEN_LIGHT = 'rgba(22,163,74,0.15)';
-const ORANGE = '#EA580C';
-const ORANGE_LIGHT = 'rgba(234,88,12,0.15)';
+// 시리즈 순서: 딥그린 → 미드그린 → 라이트그린 → 그레이 (브랜드 팔레트만 사용)
+const MID = '#4F9A86';
+const LIGHT = '#9BC5B8';
+const GRAY = '#8A8F8C';
+const GRAY_LIGHT = 'rgba(138,143,140,0.15)';
+// x축 라벨: 가로 유지, '\n'은 줄바꿈으로 렌더(Chart.js는 배열을 여러 줄로 그림)
+const X_TICKS = { maxRotation: 0, minRotation: 0, autoSkip: false, font: { size: window.innerWidth <= 400 ? 11 : 12 } };
+const lines = labels => labels.map(l => l.split('\n'));
 
 // ===== CHART 1: GI 변화 비교 (Line) — Yamaki et al. 2017 =====
 // 출처: 山木誠也 외, 日獣会誌 70, 589-593 (2017)
@@ -860,11 +837,11 @@ lazyChart('chart1', {
         label: 'IBα 단독 (n=40치아)',
         // 그룹2: 3개월 최저, 9개월까지 유의하게 낮음, 이후 완만한 증가 → 12개월에 개시값 수준 회귀
         data: [0.85, 0.55, 0.42, 0.32, 0.40, 0.48, 0.82],
-        borderColor: BLUE,
-        backgroundColor: BLUE_LIGHT,
+        borderColor: MID,
+        backgroundColor: MID,
         borderWidth: 2,
         pointRadius: 4,
-        pointBackgroundColor: BLUE,
+        pointBackgroundColor: MID,
         tension: 0.3,
         fill: false
       },
@@ -872,11 +849,13 @@ lazyChart('chart1', {
         label: '구강케어 단독 (n=32치아)',
         // 그룹3: 연간 큰 변화 없음 (진행 억제는 가능, 경감은 인정되지 않음)
         data: [0.28, 0.26, 0.25, 0.24, 0.25, 0.26, 0.28],
-        borderColor: GREEN,
-        backgroundColor: GREEN_LIGHT,
+        borderColor: LIGHT,
+        backgroundColor: LIGHT,
         borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: GREEN,
+        pointRadius: 5,
+        pointStyle: 'triangle',
+        borderDash: [2, 3],
+        pointBackgroundColor: LIGHT,
         tension: 0.3,
         fill: false
       },
@@ -888,6 +867,7 @@ lazyChart('chart1', {
         backgroundColor: GRAY_LIGHT,
         borderWidth: 2,
         pointRadius: 4,
+        pointStyle: 'rectRot',
         pointBackgroundColor: GRAY,
         borderDash: [5, 5],
         tension: 0.3,
@@ -913,7 +893,7 @@ lazyChart('chart1', {
         ticks: { stepSize: 0.2 },
         grid: { color: 'rgba(0,0,0,0.04)' }
       },
-      x: { grid: { display: false } }
+      x: { grid: { display: false }, ticks: X_TICKS }
     }
   }
 });
@@ -925,14 +905,14 @@ lazyChart('chart1', {
 lazyChart('chart2', {
   type: 'bar',
   data: {
-    labels: ['대조군\n(무처치)', 'Clindamycin\n단독', 'IBα\n단독', 'Clindamycin\n+ IBα 병용'],
+    labels: lines(['대조군\n(무처치)', 'Clindamycin\n단독', 'IBα\n단독', 'Clindamycin\n+ IBα 병용']),
     datasets: [{
       label: 'P. gulae 음성 전환율 (%)',
       data: [0, 20, 28.6, 37.5],
       backgroundColor: [
-        'rgba(170,170,170,0.6)',
-        'rgba(37,99,235,0.4)',
-        'rgba(37,99,235,0.85)',
+        GRAY,
+        LIGHT,
+        MID,
         RED
       ],
       borderRadius: 8,
@@ -956,7 +936,7 @@ lazyChart('chart2', {
         ticks: { callback: val => val + '%' },
         grid: { color: 'rgba(0,0,0,0.04)' }
       },
-      x: { grid: { display: false } }
+      x: { grid: { display: false }, ticks: X_TICKS }
     }
   }
 });
@@ -991,6 +971,7 @@ lazyChart('chart3', {
         backgroundColor: GRAY_LIGHT,
         borderWidth: 2,
         pointRadius: 5,
+        pointStyle: 'rectRot',
         pointBackgroundColor: GRAY,
         borderDash: [5, 5],
         tension: 0.3,
@@ -1016,7 +997,7 @@ lazyChart('chart3', {
         ticks: { stepSize: 1 },
         grid: { color: 'rgba(0,0,0,0.04)' }
       },
-      x: { grid: { display: false } }
+      x: { grid: { display: false }, ticks: X_TICKS }
     }
   }
 });
@@ -1029,7 +1010,7 @@ lazyChart('chart3', {
 lazyChart('chart4', {
   type: 'bar',
   data: {
-    labels: ['투여 전\n(0개월)', '투여 중\n(1개월)', '투여 후\n(2개월)'],
+    labels: lines(['투여 전\n(0개월)', '투여 중\n(1개월)', '투여 후\n(2개월)']),
     datasets: [
       {
         label: '개 — GI 점수 (평균)',
@@ -1044,7 +1025,7 @@ lazyChart('chart4', {
         label: '개 — 티올 점수 (평균)',
         // 개 티올: 0개월 → 1개월 → 2개월 모두 p<0.01
         data: [2.0, 1.5, 1.1],
-        backgroundColor: RED_MID,
+        backgroundColor: MID,
         borderRadius: 6,
         barPercentage: 0.55,
         categoryPercentage: 0.75
@@ -1053,7 +1034,7 @@ lazyChart('chart4', {
         label: '고양이 — GI 점수 (평균)',
         // 고양이 GI: 0개월 → 1개월(p<0.01), 2개월(p<0.01)
         data: [0.20, 0.11, 0.09],
-        backgroundColor: BLUE,
+        backgroundColor: LIGHT,
         borderRadius: 6,
         barPercentage: 0.55,
         categoryPercentage: 0.75
@@ -1062,7 +1043,7 @@ lazyChart('chart4', {
         label: '고양이 — 티올 점수 (평균)',
         // 고양이 티올: 0개월 → 1개월(p<0.05), 2개월(p<0.01)
         data: [3.1, 2.7, 2.0],
-        backgroundColor: 'rgba(37,99,235,0.5)',
+        backgroundColor: GRAY,
         borderRadius: 6,
         barPercentage: 0.55,
         categoryPercentage: 0.75
@@ -1086,10 +1067,38 @@ lazyChart('chart4', {
         ticks: { stepSize: 0.5 },
         grid: { color: 'rgba(0,0,0,0.04)' }
       },
-      x: { grid: { display: false } }
+      x: { grid: { display: false }, ticks: X_TICKS }
     }
   }
 });
+
+// ===== 핵심 수치 카운트업 =====
+// 화면에 들어올 때 한 번만 0.6s. 숫자 부분만 움직이고 끝나면 원문 그대로 복원. JS 없으면 원문이 그대로 보임.
+(function () {
+  if (reduceMotion || !('IntersectionObserver' in window)) return;
+  document.querySelectorAll('.paper-card .stat-number').forEach(el => {
+    const original = el.textContent;
+    const m = original.match(/\d+(?:\.\d+)?/);
+    if (!m) return;
+    const target = parseFloat(m[0]);
+    const decimals = (m[0].split('.')[1] || '').length;
+    const before = original.slice(0, m.index), after = original.slice(m.index + m[0].length);
+    const io = new IntersectionObserver(entries => {
+      if (!entries.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      const start = performance.now();
+      const tick = now => {
+        const t = Math.min((now - start) / 600, 1);
+        if (t >= 1) { el.textContent = original; return; }
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = before + (target * eased).toFixed(decimals) + after;
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.5 });
+    io.observe(el.closest('.paper-card') || el);
+  });
+})();
 </script>
 
 </body>

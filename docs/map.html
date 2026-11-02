@@ -18,17 +18,27 @@ html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Seg
 /* 툴바 */
 #toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 #toolbar select,#toolbar input,#toolbar button{
-  padding:6px 10px;font-size:14px;border:1px solid #ccc;border-radius:6px;outline:none}
-#toolbar select:focus,#toolbar input:focus{border-color:#4a90d9}
+  height:40px;padding:0 12px;font-size:14px;border:1px solid #C9D2CC;border-radius:8px;outline:none;color:#1a1a1a}
+#toolbar select:focus-visible,#toolbar input:focus-visible,#toolbar button:focus-visible{outline:2px solid #00644E;outline-offset:2px}
+#toolbar #btnSearch{background:#00644E;border-color:#00644E;color:#fff;font-weight:600}
+#toolbar #btnReset,#toolbar #btnMyLoc{background:#fff;border-color:#00644E;color:#00644E;font-weight:600}
+/* 클러스터: 브랜드 그린 단계 (흰 글자 대비 medium 4.86:1, large 7.16:1 / small 진녹 글자 6.44:1) */
+.marker-cluster-small{background-color:rgba(155,197,184,.35)}
+.marker-cluster-small div{background-color:#9BC5B8;color:#0B3D2C}
+.marker-cluster-medium{background-color:rgba(79,154,134,.35)}
+.marker-cluster-medium div{background-color:#3A7D6A;color:#fff}
+.marker-cluster-large{background-color:rgba(0,100,78,.35)}
+.marker-cluster-large div{background-color:#00644E;color:#fff}
+.marker-cluster span{font-weight:700}
 #searchBox{flex:1;min-width:200px}
 .muted{color:#666;font-size:13px}
 button{background:#fff;cursor:pointer;transition:background .15s,transform 120ms cubic-bezier(.23,1,.32,1)}
 button:active{transform:scale(.97)}
-#btnMyLoc{background:#e8f0fe;border-color:#4a90d9;color:#1a56c4;font-weight:600}
 .naver{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:6px;background:#00843d;color:#fff !important;text-decoration:none;font-weight:700}
 @media (hover:hover) and (pointer:fine){
   button:hover{background:#f0f0f0}
-  #btnMyLoc:hover{background:#d0e2fc}
+  #toolbar #btnSearch:hover{background:#004A39}
+  #toolbar #btnReset:hover,#toolbar #btnMyLoc:hover{background:#CCE0DA}
   thead th:hover{background:#eaeaea}
   #listTable tbody tr:hover{background:#f5f7fb}
 }
